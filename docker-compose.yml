@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: growsure-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-growsure_secret_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-growsure}
+      MYSQL_USER: ${MYSQL_USER:-growsure_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-growsure_user_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend-dotnet/Growsure.Api
+      dockerfile: Dockerfile
+    container_name: growsure-backend
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=db;Database=${MYSQL_DATABASE:-growsure};User=${MYSQL_USER:-growsure_user};Password=${MYSQL_PASSWORD:-growsure_user_pass};
+      - JwtSettings__Secret=${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      - AiSettings__Provider=${AI_PROVIDER:-Mock}
+      - AiSettings__ApiKey=${AI_API_KEY:-mock-key}
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: growsure-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
