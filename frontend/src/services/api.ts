@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-// Get current backend selection (default to .NET API on port 8081)
 const getBaseUrl = () => {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   const backend = localStorage.getItem('growsure_backend') || 'dotnet';
-  return backend === 'springboot' ? 'http://localhost:8080' : 'http://localhost:8081';
+  const port = backend === 'springboot' ? '8080' : '8081';
+  return `http://${hostname}:${port}`;
 };
 
 const api = axios.create({
