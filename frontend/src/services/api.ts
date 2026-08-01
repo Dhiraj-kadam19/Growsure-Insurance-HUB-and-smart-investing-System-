@@ -2,13 +2,17 @@ import axios from 'axios';
 
 const getBaseUrl = () => {
   const envUrl = (import.meta as any).env?.VITE_API_URL;
-  if (envUrl) {
+  if (envUrl && envUrl.trim() !== '') {
     return envUrl;
   }
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  const backend = localStorage.getItem('growsure_backend') || 'dotnet';
-  const port = backend === 'springboot' ? '8080' : '8081';
-  return `http://${hostname}:${port}`;
+  // In local Vite dev mode (port 3000), target localhost backend on port 8081
+  if (typeof window !== 'undefined' && window.location.port === '3000') {
+    const backend = localStorage.getItem('growsure_backend') || 'dotnet';
+    const port = backend === 'springboot' ? '8080' : '8081';
+    return `http://${window.location.hostname}:${port}`;
+  }
+  // In production (port 80 Nginx Docker deployment), use relative '/api' proxied to backend
+  return '/api';
 };
 
 const api = axios.create({
