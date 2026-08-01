@@ -6,10 +6,10 @@ services:
     container_name: growsure-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-growsure_secret_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-MySql@123}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-growsure}
-      MYSQL_USER: ${MYSQL_USER:-growsure_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-growsure_user_pass}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-MySql@123}
     ports:
       - "3306:3306"
     volumes:
@@ -30,7 +30,7 @@ services:
     restart: always
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Server=db;Database=${MYSQL_DATABASE:-growsure};User=${MYSQL_USER:-growsure_user};Password=${MYSQL_PASSWORD:-growsure_user_pass};
+      - ConnectionStrings__DefaultConnection=Server=db;Database=${MYSQL_DATABASE:-growsure};User=${MYSQL_USER:-root};Password=${MYSQL_PASSWORD:-MySql@123};
       - JwtSettings__Secret=${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
       - AiSettings__Provider=${AI_PROVIDER:-Mock}
       - AiSettings__ApiKey=${AI_API_KEY:-mock-key}

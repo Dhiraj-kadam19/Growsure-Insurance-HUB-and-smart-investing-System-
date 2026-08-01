@@ -11,10 +11,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Configure DB Context (SQL Server)
+// Configure DB Context (MySQL / SQL Server)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Server=localhost;Port=3306;Database=growsure;User=root;Password=MySql@123;";
+
 builder.Services.AddDbContext<GrowsureContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Server=(localdb)\\mssqllocaldb;Database=growsure;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"));
+{
+    if (connectionString.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlServer(connectionString);
+    }
+    else
+    {
+        options.UseMySQL(connectionString);
+    }
+});
 
 // Add AI Custom service
 builder.Services.AddScoped<AiService>();
