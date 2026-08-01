@@ -33,31 +33,110 @@ const Register: React.FC = () => {
 
   const validateAll = (): boolean => {
     const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = 'Full name is required.';
-    else if (name.trim().length < 2) errs.name = 'Name must be at least 2 characters.';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    if (!email.trim()) errs.email = 'Email address is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errs.email = 'Enter a valid email address.';
+    // Full Name
+    if (!name.trim()) {
+      errs.name = 'Full name is required.';
+    } else if (name.trim().length < 2) {
+      errs.name = 'Name must be at least 2 characters long.';
+    } else if (!/^[a-zA-Z\s'.-]+$/.test(name.trim())) {
+      errs.name = 'Name should only contain alphabetic characters.';
+    }
 
-    if (!password) errs.password = 'Password is required.';
-    else if (password.length < 6) errs.password = 'Password must be at least 6 characters.';
+    // Email
+    if (!email.trim()) {
+      errs.email = 'Email address is required.';
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())) {
+      errs.email = 'Please enter a valid email address (e.g. name@domain.com).';
+    }
 
-    if (!address.trim()) errs.address = 'Address details are required.';
+    // Password
+    if (!password) {
+      errs.password = 'Password is required.';
+    } else if (password.length < 6) {
+      errs.password = 'Password must be at least 6 characters long.';
+    } else if (!/^(?=.*[A-Za-z])(?=.*\d).{6,}$/.test(password)) {
+      errs.password = 'Password must contain at least one letter and one number.';
+    }
+
+    // Address
+    if (!address.trim()) {
+      errs.address = 'Address details are required.';
+    } else if (address.trim().length < 5) {
+      errs.address = 'Please enter a detailed address (min 5 characters).';
+    }
 
     if (role === 'POLICY_HOLDER') {
-      if (!aadhaar.trim()) errs.aadhaar = 'Aadhaar number is required.';
-      else if (!/^\d{12}$/.test(aadhaar.trim())) errs.aadhaar = 'Aadhaar must be exactly 12 digits.';
+      // Aadhaar Card
+      const cleanAadhaar = aadhaar.trim();
+      if (!cleanAadhaar) {
+        errs.aadhaar = 'Aadhaar number is required.';
+      } else if (!/^[2-9]\d{11}$/.test(cleanAadhaar)) {
+        errs.aadhaar = 'Aadhaar must be a 12-digit number starting with 2-9.';
+      } else if (/^(\d)\1{11}$/.test(cleanAadhaar)) {
+        errs.aadhaar = 'Aadhaar number cannot contain all identical digits.';
+      }
 
-      if (!pan.trim()) errs.pan = 'PAN card number is required.';
-      else if (!/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/.test(pan.trim())) errs.pan = 'Invalid PAN format (e.g. ABCDE1234F).';
+      // PAN Card
+      const cleanPan = pan.trim().toUpperCase();
+      if (!cleanPan) {
+        errs.pan = 'PAN card number is required.';
+      } else if (!/^[A-Z]{3}[PCHABGJLFTGR][A-Z]{1}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+        errs.pan = 'Invalid PAN format (e.g. ABCPE1234F). 4th char must be P for Individual.';
+      }
 
-      if (!dob) errs.dob = 'Date of birth is required.';
+      // Date of Birth
+      if (!dob) {
+        errs.dob = 'Date of birth is required.';
+      } else {
+        const selectedDob = new Date(dob);
+        selectedDob.setHours(0, 0, 0, 0);
 
-      if (!contact.trim()) errs.contact = 'Contact number is required.';
-      else if (!/^\d{10}$/.test(contact.trim())) errs.contact = 'Contact must be a 10-digit mobile number.';
+        if (isNaN(selectedDob.getTime())) {
+          errs.dob = 'Please enter a valid Date of Birth.';
+        } else if (selectedDob.getTime() > today.getTime()) {
+          errs.dob = 'Date of Birth cannot be in the future.';
+        } else if (selectedDob.getTime() === today.getTime()) {
+          errs.dob = 'Date of Birth cannot be today.';
+        } else {
+          // Calculate Age
+          let age = today.getFullYear() - selectedDob.getFullYear();
+          const m = today.getMonth() - selectedDob.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < selectedDob.getDate())) {
+            age--;
+          }
+
+          if (age < 18) {
+            errs.dob = `Age is ${age} years. You must be at least 18 years old to register as a policy holder.`;
+          } else if (age > 120) {
+            errs.dob = 'Please enter a valid Date of Birth (maximum age 120 years).';
+          }
+        }
+      }
+
+      // Contact Number
+      const cleanContact = contact.trim();
+      if (!cleanContact) {
+        errs.contact = 'Contact number is required.';
+      } else if (!/^[6-9]\d{9}$/.test(cleanContact)) {
+        errs.contact = 'Contact must be a 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
+      } else if (/^(\d)\1{9}$/.test(cleanContact)) {
+        errs.contact = 'Contact number cannot contain all identical digits.';
+      }
     } else {
-      if (!companyName.trim()) errs.companyName = 'Company name is required.';
-      if (!licenseNumber.trim()) errs.licenseNumber = 'IRDAI License number is required.';
+      // Insurer Company Name
+      if (!companyName.trim()) {
+        errs.companyName = 'Company name is required.';
+      }
+
+      // License Number
+      if (!licenseNumber.trim()) {
+        errs.licenseNumber = 'IRDAI License number is required.';
+      } else if (licenseNumber.trim().length < 5) {
+        errs.licenseNumber = 'License number must be at least 5 characters.';
+      }
     }
 
     setFieldErrors(errs);

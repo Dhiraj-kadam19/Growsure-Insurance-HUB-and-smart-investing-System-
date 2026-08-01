@@ -87,9 +87,75 @@ namespace Growsure.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Email) || !System.Text.RegularExpressions.Regex.IsMatch(dto.Email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+            {
+                return BadRequest("Invalid email address format.");
+            }
+
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
             {
                 return BadRequest("Email Address already in use!");
+            }
+
+            if (string.IsNullOrEmpty(dto.Password) || dto.Password.Length < 6)
+            {
+                return BadRequest("Password must be at least 6 characters long.");
+            }
+
+            if (dto.Role.Equals("POLICY_HOLDER", StringComparison.OrdinalIgnoreCase))
+            {
+                // Validate Aadhaar (12 digits starting with 2-9)
+                var cleanAadhaar = dto.Aadhaar?.Trim() ?? string.Empty;
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanAadhaar, @"^[2-9]\d{11}$"))
+                {
+                    return BadRequest("Aadhaar must be a valid 12-digit UIDAI number starting with digits 2-9.");
+                }
+
+                // Validate PAN (10 chars, format ABCDE1234F)
+                var cleanPan = dto.Pan?.Trim().ToUpper() ?? string.Empty;
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanPan, @"^[A-Z]{3}[PCHABGJLFTGR][A-Z]{1}[0-9]{4}[A-Z]{1}$"))
+                {
+                    return BadRequest("Invalid PAN card format (e.g. ABCPE1234F). 4th character must be P for Individual.");
+                }
+
+                // Validate Date of Birth (No future dates, age >= 18)
+                if (!dto.Dob.HasValue)
+                {
+                    return BadRequest("Date of Birth is required.");
+                }
+
+                var today = DateTime.UtcNow.Date;
+                var dobDate = dto.Dob.Value.Date;
+
+                if (dobDate > today)
+                {
+                    return BadRequest("Date of Birth cannot be in the future.");
+                }
+
+                if (dobDate == today)
+                {
+                    return BadRequest("Date of Birth cannot be today.");
+                }
+
+                int age = today.Year - dobDate.Year;
+                if (dobDate > today.AddYears(-age)) age--;
+
+                if (age < 18)
+                {
+                    return BadRequest($"Age is {age} years. You must be at least 18 years old to register as a policy holder.");
+                }
+
+                if (age > 120)
+                {
+                    return BadRequest("Invalid Date of Birth (maximum age 120 years).");
+                }
+
+                // Validate Contact (10-digit Indian mobile number starting with 6-9)
+                var cleanContact = dto.Contact?.Trim() ?? string.Empty;
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanContact, @"^[6-9]\d{9}$"))
+                {
+                    return BadRequest("Contact number must be a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.");
+                }
             }
 
             var user = new User
@@ -110,7 +176,7 @@ namespace Growsure.Api.Controllers
                 {
                     UserId = user.Id,
                     Aadhaar = dto.Aadhaar,
-                    Pan = dto.Pan,
+                    Pan = dto.Pan?.ToUpper(),
                     Dob = dto.Dob,
                     Contact = dto.Contact,
                     Address = dto.Address
