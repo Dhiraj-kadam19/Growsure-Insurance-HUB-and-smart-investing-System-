@@ -17,6 +17,7 @@ const Register: React.FC = () => {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [companyName, setCompanyName] = useState('');
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,11 +27,49 @@ const Register: React.FC = () => {
     if (newRole) {
       setRole(newRole);
       setError(null);
+      setFieldErrors({});
     }
+  };
+
+  const validateAll = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!name.trim()) errs.name = 'Full name is required.';
+    else if (name.trim().length < 2) errs.name = 'Name must be at least 2 characters.';
+
+    if (!email.trim()) errs.email = 'Email address is required.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errs.email = 'Enter a valid email address.';
+
+    if (!password) errs.password = 'Password is required.';
+    else if (password.length < 6) errs.password = 'Password must be at least 6 characters.';
+
+    if (!address.trim()) errs.address = 'Address details are required.';
+
+    if (role === 'POLICY_HOLDER') {
+      if (!aadhaar.trim()) errs.aadhaar = 'Aadhaar number is required.';
+      else if (!/^\d{12}$/.test(aadhaar.trim())) errs.aadhaar = 'Aadhaar must be exactly 12 digits.';
+
+      if (!pan.trim()) errs.pan = 'PAN card number is required.';
+      else if (!/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/.test(pan.trim())) errs.pan = 'Invalid PAN format (e.g. ABCDE1234F).';
+
+      if (!dob) errs.dob = 'Date of birth is required.';
+
+      if (!contact.trim()) errs.contact = 'Contact number is required.';
+      else if (!/^\d{10}$/.test(contact.trim())) errs.contact = 'Contact must be a 10-digit mobile number.';
+    } else {
+      if (!companyName.trim()) errs.companyName = 'Company name is required.';
+      if (!licenseNumber.trim()) errs.licenseNumber = 'IRDAI License number is required.';
+    }
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -107,7 +146,12 @@ const Register: React.FC = () => {
                 fullWidth 
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' }));
+                }}
+                error={Boolean(fieldErrors.name)}
+                helperText={fieldErrors.name}
               />
               <TextField 
                 label="Email Address" 
@@ -116,7 +160,12 @@ const Register: React.FC = () => {
                 fullWidth 
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                }}
+                error={Boolean(fieldErrors.email)}
+                helperText={fieldErrors.email}
               />
               <TextField 
                 label="Password" 
@@ -125,7 +174,12 @@ const Register: React.FC = () => {
                 fullWidth 
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
+                }}
+                error={Boolean(fieldErrors.password)}
+                helperText={fieldErrors.password}
               />
 
               {role === 'POLICY_HOLDER' ? (
@@ -138,7 +192,12 @@ const Register: React.FC = () => {
                         fullWidth 
                         required
                         value={aadhaar}
-                        onChange={(e) => setAadhaar(e.target.value)}
+                        onChange={(e) => {
+                          setAadhaar(e.target.value);
+                          if (fieldErrors.aadhaar) setFieldErrors(prev => ({ ...prev, aadhaar: '' }));
+                        }}
+                        error={Boolean(fieldErrors.aadhaar)}
+                        helperText={fieldErrors.aadhaar}
                       />
                     </Grid>
                     <Grid item xs={6}>
@@ -148,7 +207,12 @@ const Register: React.FC = () => {
                         fullWidth 
                         required
                         value={pan}
-                        onChange={(e) => setPan(e.target.value)}
+                        onChange={(e) => {
+                          setPan(e.target.value.toUpperCase());
+                          if (fieldErrors.pan) setFieldErrors(prev => ({ ...prev, pan: '' }));
+                        }}
+                        error={Boolean(fieldErrors.pan)}
+                        helperText={fieldErrors.pan}
                       />
                     </Grid>
                   </Grid>
@@ -162,7 +226,12 @@ const Register: React.FC = () => {
                         required
                         InputLabelProps={{ shrink: true }}
                         value={dob}
-                        onChange={(e) => setDob(e.target.value)}
+                        onChange={(e) => {
+                          setDob(e.target.value);
+                          if (fieldErrors.dob) setFieldErrors(prev => ({ ...prev, dob: '' }));
+                        }}
+                        error={Boolean(fieldErrors.dob)}
+                        helperText={fieldErrors.dob}
                       />
                     </Grid>
                     <Grid item xs={6}>
@@ -172,7 +241,12 @@ const Register: React.FC = () => {
                         fullWidth 
                         required
                         value={contact}
-                        onChange={(e) => setContact(e.target.value)}
+                        onChange={(e) => {
+                          setContact(e.target.value);
+                          if (fieldErrors.contact) setFieldErrors(prev => ({ ...prev, contact: '' }));
+                        }}
+                        error={Boolean(fieldErrors.contact)}
+                        helperText={fieldErrors.contact}
                       />
                     </Grid>
                   </Grid>
@@ -185,7 +259,12 @@ const Register: React.FC = () => {
                     fullWidth 
                     required
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => {
+                      setCompanyName(e.target.value);
+                      if (fieldErrors.companyName) setFieldErrors(prev => ({ ...prev, companyName: '' }));
+                    }}
+                    error={Boolean(fieldErrors.companyName)}
+                    helperText={fieldErrors.companyName}
                   />
                   <TextField 
                     label="Insurance IRDAI License Number" 
@@ -193,7 +272,12 @@ const Register: React.FC = () => {
                     fullWidth 
                     required
                     value={licenseNumber}
-                    onChange={(e) => setLicenseNumber(e.target.value)}
+                    onChange={(e) => {
+                      setLicenseNumber(e.target.value);
+                      if (fieldErrors.licenseNumber) setFieldErrors(prev => ({ ...prev, licenseNumber: '' }));
+                    }}
+                    error={Boolean(fieldErrors.licenseNumber)}
+                    helperText={fieldErrors.licenseNumber}
                   />
                 </>
               )}
@@ -206,7 +290,12 @@ const Register: React.FC = () => {
                 fullWidth 
                 required
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  if (fieldErrors.address) setFieldErrors(prev => ({ ...prev, address: '' }));
+                }}
+                error={Boolean(fieldErrors.address)}
+                helperText={fieldErrors.address}
               />
 
               <Button 

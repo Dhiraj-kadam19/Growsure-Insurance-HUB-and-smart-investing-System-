@@ -23,6 +23,8 @@ import Logo from '../components/Logo';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [openLogin, setOpenLogin] = useState(false);
@@ -31,8 +33,41 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const validateEmail = (val: string): string | null => {
+    if (!val.trim()) return 'Email address is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(val.trim())) return 'Please enter a valid email address (e.g. user@example.com).';
+    return null;
+  };
+
+  const validatePassword = (val: string): string | null => {
+    if (!val) return 'Password is required.';
+    if (val.length < 6) return 'Password must be at least 6 characters long.';
+    return null;
+  };
+
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (emailError) setEmailError(validateEmail(val));
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (passwordError) setPasswordError(validatePassword(val));
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+
+    setEmailError(eErr);
+    setPasswordError(pErr);
+
+    if (eErr || pErr) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -49,6 +84,8 @@ const Login: React.FC = () => {
   const handleQuickLogin = (roleEmail: string) => {
     setEmail(roleEmail);
     setPassword('password123'); // seed password
+    setEmailError(null);
+    setPasswordError(null);
   };
 
   return (
@@ -491,7 +528,10 @@ const Login: React.FC = () => {
                 fullWidth 
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                onBlur={() => setEmailError(validateEmail(email))}
+                error={Boolean(emailError)}
+                helperText={emailError}
                 sx={{
                   '& .MuiInputBase-input': { color: '#ffffff', fontSize: '1rem', fontWeight: 500 },
                   '& .MuiInputLabel-root': { color: '#94a3b8' },
@@ -502,7 +542,8 @@ const Login: React.FC = () => {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
                     '&.Mui-focused fieldset': { borderColor: '#38bdf8', borderWidth: '2px' }
-                  }
+                  },
+                  '& .MuiFormHelperText-root': { color: '#f87171', fontWeight: 600, fontSize: '0.82rem', mt: 0.8 }
                 }}
               />
               <TextField 
@@ -512,7 +553,10 @@ const Login: React.FC = () => {
                 fullWidth 
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                onBlur={() => setPasswordError(validatePassword(password))}
+                error={Boolean(passwordError)}
+                helperText={passwordError}
                 sx={{
                   '& .MuiInputBase-input': { color: '#ffffff', fontSize: '1rem', fontWeight: 500 },
                   '& .MuiInputLabel-root': { color: '#94a3b8' },
@@ -523,7 +567,8 @@ const Login: React.FC = () => {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
                     '&.Mui-focused fieldset': { borderColor: '#38bdf8', borderWidth: '2px' }
-                  }
+                  },
+                  '& .MuiFormHelperText-root': { color: '#f87171', fontWeight: 600, fontSize: '0.82rem', mt: 0.8 }
                 }}
               />
               <Button 
