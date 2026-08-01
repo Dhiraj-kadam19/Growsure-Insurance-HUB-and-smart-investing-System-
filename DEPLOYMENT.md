@@ -43,9 +43,9 @@ The project includes pre-configured Dockerfiles and a `docker-compose.yml` file 
    ```
 
 4. Access the running platform:
-   - **Frontend App**: `http://localhost`
-   - **Backend API (Swagger Docs)**: `http://localhost:8081/swagger`
-   - **MySQL Database**: `localhost:3306` (Database: `growsure`)
+   - **Frontend App**: `http://52.66.109.57` (or `http://localhost`)
+   - **Backend API (Swagger Docs)**: `http://52.66.109.57:8081/swagger` (or `http://localhost:8081/swagger`)
+   - **MySQL Database**: `52.66.109.57:3306` (Database: `growsure`, User: `root`, Pass: `MySql@123`)
 
 5. Stop all services:
    ```bash
