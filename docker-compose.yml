@@ -17,10 +17,11 @@ services:
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
       - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pMySql@123"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   backend:
     build:
@@ -37,8 +38,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
   frontend:
     build:
