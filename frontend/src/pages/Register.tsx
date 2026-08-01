@@ -62,10 +62,15 @@ const Register: React.FC = () => {
     }
 
     // Address
-    if (!address.trim()) {
+    const cleanAddr = address.trim();
+    if (!cleanAddr) {
       errs.address = 'Address details are required.';
-    } else if (address.trim().length < 5) {
-      errs.address = 'Please enter a detailed address (min 5 characters).';
+    } else if (cleanAddr.length < 10) {
+      errs.address = 'Address must be at least 10 characters (include house number, street, city, pin code).';
+    } else if (!/[a-zA-Z]{3,}/.test(cleanAddr)) {
+      errs.address = 'Address must contain valid text for street/city (gibberish/symbols rejected).';
+    } else if (/^[^a-zA-Z0-9]+$/.test(cleanAddr)) {
+      errs.address = 'Address cannot contain only special characters.';
     }
 
     if (role === 'POLICY_HOLDER') {
@@ -73,6 +78,10 @@ const Register: React.FC = () => {
       const cleanAadhaar = aadhaar.trim();
       if (!cleanAadhaar) {
         errs.aadhaar = 'Aadhaar number is required.';
+      } else if (/[^\d]/.test(cleanAadhaar)) {
+        errs.aadhaar = 'Aadhaar must contain only numeric digits (no alphabets or symbols).';
+      } else if (cleanAadhaar.length !== 12) {
+        errs.aadhaar = 'Aadhaar must be a 12-digit numeric value.';
       } else if (!/^[2-9]\d{11}$/.test(cleanAadhaar)) {
         errs.aadhaar = 'Aadhaar must be a 12-digit number starting with 2-9.';
       } else if (/^(\d)\1{11}$/.test(cleanAadhaar)) {
@@ -83,8 +92,10 @@ const Register: React.FC = () => {
       const cleanPan = pan.trim().toUpperCase();
       if (!cleanPan) {
         errs.pan = 'PAN card number is required.';
-      } else if (!/^[A-Z]{3}[PCHABGJLFTGR][A-Z]{1}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
-        errs.pan = 'Invalid PAN format (e.g. ABCPE1234F). 4th char must be P for Individual.';
+      } else if (cleanPan.length !== 10) {
+        errs.pan = 'PAN must be exactly 10 characters long (e.g. ABCDE1234F).';
+      } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+        errs.pan = 'PAN must follow format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F).';
       }
 
       // Date of Birth
@@ -97,7 +108,7 @@ const Register: React.FC = () => {
         if (isNaN(selectedDob.getTime())) {
           errs.dob = 'Please enter a valid Date of Birth.';
         } else if (selectedDob.getTime() > today.getTime()) {
-          errs.dob = 'Date of Birth cannot be in the future.';
+          errs.dob = 'Date of Birth cannot be in the future. Accept only past or present dates.';
         } else if (selectedDob.getTime() === today.getTime()) {
           errs.dob = 'Date of Birth cannot be today.';
         } else {
@@ -120,8 +131,12 @@ const Register: React.FC = () => {
       const cleanContact = contact.trim();
       if (!cleanContact) {
         errs.contact = 'Contact number is required.';
+      } else if (/[^\d]/.test(cleanContact)) {
+        errs.contact = 'Contact number must contain only digits (no alphabets or special characters).';
+      } else if (cleanContact.length !== 10) {
+        errs.contact = 'Contact number must be a valid 10-digit mobile number.';
       } else if (!/^[6-9]\d{9}$/.test(cleanContact)) {
-        errs.contact = 'Contact must be a 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
+        errs.contact = 'Contact must be a 10-digit mobile number starting with 6, 7, 8, or 9.';
       } else if (/^(\d)\1{9}$/.test(cleanContact)) {
         errs.contact = 'Contact number cannot contain all identical digits.';
       }
