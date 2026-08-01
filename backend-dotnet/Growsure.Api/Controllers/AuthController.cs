@@ -156,6 +156,17 @@ namespace Growsure.Api.Controllers
                 {
                     return BadRequest("Contact number must be a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.");
                 }
+
+                // Check if Aadhaar or PAN is already registered
+                if (await _context.PolicyHolders.AnyAsync(p => p.Aadhaar == cleanAadhaar))
+                {
+                    return BadRequest("This Aadhaar number is already registered!");
+                }
+
+                if (await _context.PolicyHolders.AnyAsync(p => p.Pan == cleanPan))
+                {
+                    return BadRequest("This PAN card number is already registered!");
+                }
             }
 
             var user = new User
