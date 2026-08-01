@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL, -- POLICY_HOLDER, INSURER, ADMIN
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 2. Policy Holders Table
@@ -56,8 +56,8 @@ CREATE TABLE IF NOT EXISTS purchased_policies (
     purchase_id INT AUTO_INCREMENT PRIMARY KEY,
     policy_holder_id INT NOT NULL,
     policy_id INT NOT NULL,
-    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    end_date TIMESTAMP NULL,
+    start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    end_date DATETIME NULL,
     status VARCHAR(50) DEFAULT 'ACTIVE', -- ACTIVE, LAPSED, EXPIRED
     policy_number VARCHAR(100) NOT NULL UNIQUE,
     FOREIGN KEY (policy_holder_id) REFERENCES policy_holders(id) ON DELETE CASCADE,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS claims (
     document_urls TEXT, -- JSON array string of document paths
     fraud_score DOUBLE DEFAULT 0.0,
     fraud_reasons TEXT, -- descriptive reason for fraud score
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (purchase_id) REFERENCES purchased_policies(purchase_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     status VARCHAR(50) DEFAULT 'PENDING', -- PENDING, SUCCESS, FAILED
     payment_type VARCHAR(100) NOT NULL, -- POLICY_PREMIUM, MUTUAL_FUND_SIP, MUTUAL_FUND_LUMPSUM
     reference_id INT, -- purchased_policy_id or investment_id
-    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    transaction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS investments (
     sip_amount DOUBLE DEFAULT 0.0,
     investment_type VARCHAR(50) NOT NULL, -- SIP, LUMPSUM
     day_of_month INT DEFAULT 5,
-    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    start_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(50) DEFAULT 'ACTIVE', -- ACTIVE, COMPLETED
     FOREIGN KEY (policy_holder_id) REFERENCES policy_holders(id) ON DELETE CASCADE,
     FOREIGN KEY (fund_id) REFERENCES funds(fund_id) ON DELETE CASCADE
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS ai_recommendations (
     recommendation_type VARCHAR(100) NOT NULL, -- POLICY, FUND, FINANCIAL_PLAN
     input_criteria TEXT, -- JSON criteria supplied to AI
     output_recommendation TEXT, -- JSON response from AI
-    generated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    generated_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -162,6 +162,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     action VARCHAR(255) NOT NULL,
     details TEXT,
     ip_address VARCHAR(100),
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
