@@ -87,12 +87,14 @@ namespace Growsure.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Email) || !System.Text.RegularExpressions.Regex.IsMatch(dto.Email.Trim(), @"^[^\s@]+@[^\s@]+\.[^\s@]+$"))
+            var cleanEmail = dto.Email?.Trim() ?? string.Empty;
+            var emailRegex = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$";
+            if (string.IsNullOrWhiteSpace(cleanEmail) || !System.Text.RegularExpressions.Regex.IsMatch(cleanEmail, emailRegex))
             {
-                return BadRequest("Invalid email address format.");
+                return BadRequest("Please enter a valid email address.");
             }
 
-            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            if (await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail.ToLower()))
             {
                 return BadRequest("Email Address already in use!");
             }
@@ -104,11 +106,16 @@ namespace Growsure.Api.Controllers
 
             if (dto.Role.Equals("POLICY_HOLDER", StringComparison.OrdinalIgnoreCase))
             {
-                // Validate Aadhaar (12 digits starting with 2-9)
-                var cleanAadhaar = dto.Aadhaar?.Trim() ?? string.Empty;
-                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanAadhaar, @"^[2-9]\d{11}$"))
+                // Validate Aadhaar (exactly 12 numeric digits)
+                var rawAadhaar = dto.Aadhaar ?? string.Empty;
+                var cleanAadhaar = rawAadhaar.Trim();
+                if (System.Text.RegularExpressions.Regex.IsMatch(cleanAadhaar, @"[^\d]"))
                 {
-                    return BadRequest("Aadhaar must be a valid 12-digit UIDAI number starting with digits 2-9.");
+                    return BadRequest("Only numeric values are allowed.");
+                }
+                if (cleanAadhaar.Length != 12)
+                {
+                    return BadRequest("Aadhaar number must contain exactly 12 digits.");
                 }
 
                 // Validate PAN (10 chars, format ABCDE1234F)
@@ -150,11 +157,20 @@ namespace Growsure.Api.Controllers
                     return BadRequest("Invalid Date of Birth (maximum age 120 years).");
                 }
 
-                // Validate Contact (10-digit Indian mobile number starting with 6-9)
-                var cleanContact = dto.Contact?.Trim() ?? string.Empty;
-                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanContact, @"^[6-9]\d{9}$"))
+                // Validate Contact (exactly 10 numeric digits, not all identical digits)
+                var rawContact = dto.Contact ?? string.Empty;
+                var cleanContact = rawContact.Trim();
+                if (System.Text.RegularExpressions.Regex.IsMatch(cleanContact, @"[^\d]"))
                 {
-                    return BadRequest("Contact number must be a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.");
+                    return BadRequest("Only numeric values are allowed.");
+                }
+                if (cleanContact.Length != 10)
+                {
+                    return BadRequest("Mobile number must contain exactly 10 digits.");
+                }
+                if (System.Text.RegularExpressions.Regex.IsMatch(cleanContact, @"^(\d)\1{9}$"))
+                {
+                    return BadRequest("Invalid mobile number.");
                 }
 
                 // Check if Aadhaar or PAN is already registered
@@ -168,6 +184,7 @@ namespace Growsure.Api.Controllers
                     return BadRequest("This PAN card number is already registered!");
                 }
             }
+
 
             var user = new User
             {

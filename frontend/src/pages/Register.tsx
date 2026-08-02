@@ -35,6 +35,43 @@ const Register: React.FC = () => {
     }
   };
 
+  const validateEmailValue = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) return 'Email address is required.';
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(trimmed)) {
+      return 'Please enter a valid email address.';
+    }
+    return '';
+  };
+
+  const validateContactValue = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) return 'Contact number is required.';
+    if (/[^\d]/.test(trimmed)) {
+      return 'Only numeric values are allowed.';
+    }
+    if (trimmed.length !== 10) {
+      return 'Mobile number must contain exactly 10 digits.';
+    }
+    if (/^(\d)\1{9}$/.test(trimmed)) {
+      return 'Invalid mobile number.';
+    }
+    return '';
+  };
+
+  const validateAadhaarValue = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) return 'Aadhaar number is required.';
+    if (/[^\d]/.test(trimmed)) {
+      return 'Only numeric values are allowed.';
+    }
+    if (trimmed.length !== 12) {
+      return 'Aadhaar number must contain exactly 12 digits.';
+    }
+    return '';
+  };
+
   const validateAll = (): boolean => {
     const errs: Record<string, string> = {};
     const today = new Date();
@@ -50,11 +87,8 @@ const Register: React.FC = () => {
     }
 
     // Email
-    if (!email.trim()) {
-      errs.email = 'Email address is required.';
-    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())) {
-      errs.email = 'Please enter a valid email address (e.g. name@domain.com).';
-    }
+    const emailErr = validateEmailValue(email);
+    if (emailErr) errs.email = emailErr;
 
     // Password
     if (!password) {
@@ -79,18 +113,8 @@ const Register: React.FC = () => {
 
     if (role === 'POLICY_HOLDER') {
       // Aadhaar Card
-      const cleanAadhaar = aadhaar.trim();
-      if (!cleanAadhaar) {
-        errs.aadhaar = 'Aadhaar number is required.';
-      } else if (/[^\d]/.test(cleanAadhaar)) {
-        errs.aadhaar = 'Aadhaar must contain only numeric digits (no alphabets or symbols).';
-      } else if (cleanAadhaar.length !== 12) {
-        errs.aadhaar = 'Aadhaar must be a 12-digit numeric value.';
-      } else if (!/^[2-9]\d{11}$/.test(cleanAadhaar)) {
-        errs.aadhaar = 'Aadhaar must be a 12-digit number starting with 2-9.';
-      } else if (/^(\d)\1{11}$/.test(cleanAadhaar)) {
-        errs.aadhaar = 'Aadhaar number cannot contain all identical digits.';
-      }
+      const aadhaarErr = validateAadhaarValue(aadhaar);
+      if (aadhaarErr) errs.aadhaar = aadhaarErr;
 
       // PAN Card
       const cleanPan = pan.trim().toUpperCase();
@@ -116,7 +140,6 @@ const Register: React.FC = () => {
         } else if (selectedDob.getTime() === today.getTime()) {
           errs.dob = 'Date of Birth cannot be today.';
         } else {
-          // Calculate Age
           let age = today.getFullYear() - selectedDob.getFullYear();
           const m = today.getMonth() - selectedDob.getMonth();
           if (m < 0 || (m === 0 && today.getDate() < selectedDob.getDate())) {
@@ -132,25 +155,13 @@ const Register: React.FC = () => {
       }
 
       // Contact Number
-      const cleanContact = contact.trim();
-      if (!cleanContact) {
-        errs.contact = 'Contact number is required.';
-      } else if (/[^\d]/.test(cleanContact)) {
-        errs.contact = 'Contact number must contain only digits (no alphabets or special characters).';
-      } else if (cleanContact.length !== 10) {
-        errs.contact = 'Contact number must be a valid 10-digit mobile number.';
-      } else if (!/^[6-9]\d{9}$/.test(cleanContact)) {
-        errs.contact = 'Contact must be a 10-digit mobile number starting with 6, 7, 8, or 9.';
-      } else if (/^(\d)\1{9}$/.test(cleanContact)) {
-        errs.contact = 'Contact number cannot contain all identical digits.';
-      }
+      const contactErr = validateContactValue(contact);
+      if (contactErr) errs.contact = contactErr;
     } else {
-      // Insurer Company Name
       if (!companyName.trim()) {
         errs.companyName = 'Company name is required.';
       }
 
-      // License Number
       if (!licenseNumber.trim()) {
         errs.licenseNumber = 'IRDAI License number is required.';
       } else if (licenseNumber.trim().length < 5) {
@@ -161,6 +172,7 @@ const Register: React.FC = () => {
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
+
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,8 +271,10 @@ const Register: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                  const val = e.target.value;
+                  setEmail(val);
+                  const err = validateEmailValue(val);
+                  setFieldErrors(prev => ({ ...prev, email: err }));
                 }}
                 error={Boolean(fieldErrors.email)}
                 helperText={fieldErrors.email}
@@ -304,9 +318,18 @@ const Register: React.FC = () => {
                         fullWidth 
                         required
                         value={aadhaar}
+                        inputProps={{ maxLength: 12 }}
                         onChange={(e) => {
-                          setAadhaar(e.target.value);
-                          if (fieldErrors.aadhaar) setFieldErrors(prev => ({ ...prev, aadhaar: '' }));
+                          const raw = e.target.value;
+                          const cleaned = raw.replace(/\D/g, '').slice(0, 12);
+                          setAadhaar(cleaned);
+                          let err = '';
+                          if (/[^\d]/.test(raw)) {
+                            err = 'Only numeric values are allowed.';
+                          } else {
+                            err = validateAadhaarValue(cleaned);
+                          }
+                          setFieldErrors(prev => ({ ...prev, aadhaar: err }));
                         }}
                         error={Boolean(fieldErrors.aadhaar)}
                         helperText={fieldErrors.aadhaar}
@@ -353,15 +376,25 @@ const Register: React.FC = () => {
                         fullWidth 
                         required
                         value={contact}
+                        inputProps={{ maxLength: 10 }}
                         onChange={(e) => {
-                          setContact(e.target.value);
-                          if (fieldErrors.contact) setFieldErrors(prev => ({ ...prev, contact: '' }));
+                          const raw = e.target.value;
+                          const cleaned = raw.replace(/\D/g, '').slice(0, 10);
+                          setContact(cleaned);
+                          let err = '';
+                          if (/[^\d]/.test(raw)) {
+                            err = 'Only numeric values are allowed.';
+                          } else {
+                            err = validateContactValue(cleaned);
+                          }
+                          setFieldErrors(prev => ({ ...prev, contact: err }));
                         }}
                         error={Boolean(fieldErrors.contact)}
                         helperText={fieldErrors.contact}
                       />
                     </Grid>
                   </Grid>
+
                 </>
               ) : (
                 <>
