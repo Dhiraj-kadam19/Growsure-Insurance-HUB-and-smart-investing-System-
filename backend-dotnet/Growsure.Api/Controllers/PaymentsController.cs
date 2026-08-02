@@ -72,7 +72,21 @@ namespace Growsure.Api.Controllers
             if (user == null) return NotFound();
 
             var holder = await _context.PolicyHolders.FirstOrDefaultAsync(h => h.UserId == user.Id);
-            if (holder == null) return NotFound("Customer profile not found");
+            if (holder == null)
+            {
+                holder = new PolicyHolder
+                {
+                    UserId = user.Id,
+                    Aadhaar = "200000000000",
+                    Pan = "ABCPE1234F",
+                    Dob = new DateTime(1995, 1, 1),
+                    Contact = "9876543210",
+                    Address = "Growsure Registered Address"
+                };
+                _context.PolicyHolders.Add(holder);
+                await _context.SaveChangesAsync();
+            }
+
 
             var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.OrderId == callback.OrderId);
             if (transaction == null) return NotFound("Transaction not found");

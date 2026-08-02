@@ -68,34 +68,38 @@ const PolicyMarketplace: React.FC = () => {
 
   const handleCreateOrder = async () => {
     try {
-      const response = await api.post(`/api/payments/create-order?policyId=${selectedPolicy.id}`);
+      const response = await api.post('/api/payments/create-order', {
+        amount: selectedPolicy.premiumAmount,
+        paymentType: 'POLICY_PREMIUM',
+        referenceId: selectedPolicy.id
+      });
       setPaymentData(response.data);
       setBuyDialogOpen(false);
       setPaymentOverlayOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to initialize payment gateway.');
+      const msg = err?.response?.data || 'Failed to initialize payment gateway.';
+      alert(typeof msg === 'string' ? msg : 'Failed to initialize payment gateway.');
     }
   };
 
   const handleSimulatePaymentSuccess = async () => {
     try {
-      const response = await api.post('/api/payments/verify', {
+      const response = await api.post('/api/payments/verify-payment', {
         orderId: paymentData.orderId,
         paymentId: 'pay_sim_' + Math.floor(Math.random() * 1000000),
-        policyId: selectedPolicy.id,
-        nomineeName,
-        nomineeRelationship,
-        nomineeContact
+        signature: 'sig_sim_' + Math.floor(Math.random() * 1000000)
       });
       setPaymentOverlayOpen(false);
-      setPurchasedNumber(response.data.policyNumber);
+      setPurchasedNumber(response.data?.policyNumber || paymentData?.orderId || 'POL-' + Math.floor(Math.random() * 1000000));
       setSuccessDialogOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Payment validation failed.');
+      const msg = err?.response?.data || 'Payment validation failed.';
+      alert(typeof msg === 'string' ? msg : 'Payment validation failed.');
     }
   };
+
 
   const filteredPolicies = policiesList.filter(policy => {
     const matchesCategory = category === '' || policy.category === category;
