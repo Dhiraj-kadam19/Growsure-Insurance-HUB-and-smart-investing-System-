@@ -25,4 +25,8 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="db\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
