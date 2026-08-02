@@ -146,6 +146,10 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/", () => Results.Ok(new { message = "Growsure API is up and running!", swagger = "/swagger" }));
+
 app.MapControllers();
 
-app.Run("http://localhost:8081");
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8081";
+app.Run($"http://0.0.0.0:{port}");
+
