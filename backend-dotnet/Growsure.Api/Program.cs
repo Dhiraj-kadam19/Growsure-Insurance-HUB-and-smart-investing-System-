@@ -11,13 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Configure DB Context (MySQL / SQL Server)
+// Configure DB Context (MySQL / SQLite / SQL Server)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=localhost;Port=3306;Database=growsure;User=root;Password=MySql@123;";
+    ?? "Data Source=growsure.db";
 
 builder.Services.AddDbContext<GrowsureContext>(options =>
 {
-    if (connectionString.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
+    if (connectionString.Contains("Data Source", StringComparison.OrdinalIgnoreCase) || connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(connectionString);
+    }
+    else if (connectionString.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
     {
         options.UseSqlServer(connectionString);
     }
@@ -26,6 +30,7 @@ builder.Services.AddDbContext<GrowsureContext>(options =>
         options.UseMySQL(connectionString);
     }
 });
+
 
 // Add AI Custom service
 builder.Services.AddScoped<AiService>();
@@ -106,30 +111,15 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<GrowsureContext>();
-        bool needRecreate = false;
-        try
-        {
-            // Initialize and ensure database seed data is up to date
-            DbInitializer.Initialize(context);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Schema mismatch or DB error detected. Recreating database...");
-            needRecreate = true;
-        }
-
-        if (needRecreate)
-        {
-            context.Database.EnsureDeleted();
-            context.Database.EnsureCreated();
-            DbInitializer.Initialize(context);
-        }
+        context.Database.EnsureCreated();
+        DbInitializer.Initialize(context);
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred seeding the DB.");
+        logger.LogWarning(ex, "Database seeding warning: {Message}", ex.Message);
     }
 }
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || true) // enable Swagger in both dev and prod simulation
