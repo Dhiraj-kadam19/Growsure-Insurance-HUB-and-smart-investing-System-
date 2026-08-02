@@ -233,5 +233,121 @@ namespace Growsure.Api.Controllers
 
             return Ok(user);
         }
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Otp, DateTime Expiry, bool Verified)> _otpStore 
+            = new System.Collections.Concurrent.ConcurrentDictionary<string, (string, DateTime, bool)>(StringComparer.OrdinalIgnoreCase);
+
+        public class ForgotPasswordDto
+        {
+            public string Email { get; set; } = string.Empty;
+        }
+
+        public class VerifyOtpDto
+        {
+            public string Email { get; set; } = string.Empty;
+            public string Otp { get; set; } = string.Empty;
+        }
+
+        public class ResetPasswordDto
+        {
+            public string Email { get; set; } = string.Empty;
+            public string Otp { get; set; } = string.Empty;
+            public string NewPassword { get; set; } = string.Empty;
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email))
+            {
+                return BadRequest("Email address is required.");
+            }
+
+            var cleanEmail = dto.Email.Trim().ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == cleanEmail);
+            if (user == null)
+            {
+                return BadRequest("No account registered with this email address.");
+            }
+
+            var otp = new Random().Next(100000, 999999).ToString();
+            var expiry = DateTime.UtcNow.AddMinutes(15);
+            _otpStore[cleanEmail] = (otp, expiry, false);
+
+            return Ok(new
+            {
+                message = $"Verification code sent to {cleanEmail}.",
+                otp = otp
+            });
+        }
+
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Otp))
+            {
+                return BadRequest("Email and Verification Code are required.");
+            }
+
+            var cleanEmail = dto.Email.Trim().ToLower();
+            if (!_otpStore.TryGetValue(cleanEmail, out var item))
+            {
+                return BadRequest("No verification code was requested for this email.");
+            }
+
+            if (DateTime.UtcNow > item.Expiry)
+            {
+                _otpStore.TryRemove(cleanEmail, out _);
+                return BadRequest("Verification code has expired. Please request a new code.");
+            }
+
+            if (item.Otp != dto.Otp.Trim())
+            {
+                return BadRequest("Invalid 6-digit verification code.");
+            }
+
+            _otpStore[cleanEmail] = (item.Otp, item.Expiry, true);
+
+            return Ok(new { message = "Email verified successfully! You can now reset your password." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Otp) || string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                return BadRequest("All fields are required.");
+            }
+
+            var cleanEmail = dto.Email.Trim().ToLower();
+            if (!_otpStore.TryGetValue(cleanEmail, out var item))
+            {
+                return BadRequest("Please verify your email code before changing your password.");
+            }
+
+            if (!item.Verified || item.Otp != dto.Otp.Trim())
+            {
+                return BadRequest("Unverified email. You must enter and verify the code sent to your email before resetting your password.");
+            }
+
+            if (dto.NewPassword.Length < 6)
+            {
+                return BadRequest("Password must be at least 6 characters long.");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == cleanEmail);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            await _context.SaveChangesAsync();
+
+            _otpStore.TryRemove(cleanEmail, out _);
+
+            return Ok(new { message = "Password reset successfully! You can now log in with your new password." });
+        }
     }
 }
+

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Box, Card, CardContent, TextField, Button, Typography, Alert, ToggleButton, ToggleButtonGroup, Grid } from '@mui/material';
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, ToggleButton, ToggleButtonGroup, Grid, InputAdornment, IconButton } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import api from '../services/api';
 import Logo from '../components/Logo';
 
@@ -9,6 +11,8 @@ const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const [aadhaar, setAadhaar] = useState('');
   const [pan, setPan] = useState('');
   const [dob, setDob] = useState('');
@@ -263,7 +267,7 @@ const Register: React.FC = () => {
               />
               <TextField 
                 label="Password" 
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 variant="outlined" 
                 fullWidth 
                 required
@@ -274,7 +278,21 @@ const Register: React.FC = () => {
                 }}
                 error={Boolean(fieldErrors.password)}
                 helperText={fieldErrors.password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
               />
+
 
               {role === 'POLICY_HOLDER' ? (
                 <>

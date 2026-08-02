@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { 
   Box, Card, CardContent, TextField, Button, Typography, Grid, 
   Alert, Divider, Container, Chip, Avatar,
-  Dialog, DialogContent, DialogTitle, IconButton
+  Dialog, DialogContent, DialogTitle, IconButton, InputAdornment
 } from '@mui/material';
 import ShieldIcon from '@mui/icons-material/Shield';
 import HomeIcon from '@mui/icons-material/Home';
@@ -15,6 +15,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import PhoneIcon from '@mui/icons-material/Phone';
 import InfoIcon from '@mui/icons-material/Info';
 import ContactSupportIcon from '@mui/icons-material/ContactSupport';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import LockResetIcon from '@mui/icons-material/LockReset';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
+import KeyIcon from '@mui/icons-material/Key';
+
 
 import api from '../services/api';
 import { loginSuccess } from '../store';
@@ -23,6 +29,112 @@ import Logo from '../components/Logo';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+
+  // Forgot / Reset Password state
+  const [openForgotPassword, setOpenForgotPassword] = useState(false);
+  const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+  const [generatedOtpMsg, setGeneratedOtpMsg] = useState<string | null>(null);
+
+  const handleOpenForgotPasswordModal = () => {
+    setForgotStep(1);
+    setForgotEmail(email);
+    setForgotOtp('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setForgotError(null);
+    setForgotSuccess(null);
+    setGeneratedOtpMsg(null);
+    setOpenLogin(false);
+    setOpenForgotPassword(true);
+  };
+
+  const handleSendForgotPasswordOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      setForgotError('Please enter your registered email address.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError(null);
+    setForgotSuccess(null);
+    try {
+      const response = await api.post('/api/auth/forgot-password', { email: forgotEmail });
+      setGeneratedOtpMsg(response.data?.otp ? `Verification Code: ${response.data.otp}` : null);
+      setForgotSuccess(response.data?.message || 'Verification code sent to your email.');
+      setForgotStep(2);
+    } catch (err: any) {
+      setForgotError(err.response?.data || 'Failed to send verification code.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleVerifyOtpCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotOtp.trim()) {
+      setForgotError('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError(null);
+    setForgotSuccess(null);
+    try {
+      const response = await api.post('/api/auth/verify-otp', { email: forgotEmail, otp: forgotOtp });
+      setForgotSuccess(response.data?.message || 'Email verified successfully! Enter your new password.');
+      setForgotStep(3);
+    } catch (err: any) {
+      setForgotError(err.response?.data || 'Invalid or expired verification code.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) {
+      setForgotError('New password is required.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setForgotError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setForgotError('Passwords do not match.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError(null);
+    setForgotSuccess(null);
+    try {
+      const response = await api.post('/api/auth/reset-password', {
+        email: forgotEmail,
+        otp: forgotOtp,
+        newPassword: newPassword
+      });
+      alert(response.data?.message || 'Password reset successfully! Please sign in with your new password.');
+      setOpenForgotPassword(false);
+      setOpenLogin(true);
+    } catch (err: any) {
+      setForgotError(err.response?.data || 'Failed to reset password. Please ensure email verification is complete.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -548,7 +660,7 @@ const Login: React.FC = () => {
               />
               <TextField 
                 label="Password" 
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 variant="outlined" 
                 fullWidth 
                 required
@@ -557,6 +669,20 @@ const Login: React.FC = () => {
                 onBlur={() => setPasswordError(validatePassword(password))}
                 error={Boolean(passwordError)}
                 helperText={passwordError}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: '#94a3b8' }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
                 sx={{
                   '& .MuiInputBase-input': { color: '#ffffff', fontSize: '1rem', fontWeight: 500 },
                   '& .MuiInputLabel-root': { color: '#94a3b8' },
@@ -571,6 +697,22 @@ const Login: React.FC = () => {
                   '& .MuiFormHelperText-root': { color: '#f87171', fontWeight: 600, fontSize: '0.82rem', mt: 0.8 }
                 }}
               />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -1.5 }}>
+                <Button 
+                  onClick={handleOpenForgotPasswordModal}
+                  sx={{ 
+                    color: '#38bdf8', 
+                    textTransform: 'none', 
+                    fontWeight: 700, 
+                    fontSize: '0.85rem',
+                    p: 0,
+                    '&:hover': { background: 'transparent', textDecoration: 'underline' }
+                  }}
+                >
+                  Forgot Password?
+                </Button>
+              </Box>
+
               <Button 
                 type="submit" 
                 variant="contained" 
@@ -911,8 +1053,255 @@ const Login: React.FC = () => {
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Forgot & Reset Password Dialog Modal with Mandatory Email OTP Verification */}
+      <Dialog
+        open={openForgotPassword}
+        onClose={() => setOpenForgotPassword(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#111827',
+            color: '#f3f4f6',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.12)',
+            p: 2
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <LockResetIcon sx={{ color: '#38bdf8', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}>
+              Reset Account Password
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setOpenForgotPassword(false)} sx={{ color: '#94a3b8' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 2 }}>
+          {/* Multi-step progress indicator */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, px: 2, py: 1.5, borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <Chip 
+              icon={<MarkEmailReadIcon />} 
+              label="1. Email Code" 
+              color={forgotStep === 1 ? 'primary' : 'default'} 
+              variant={forgotStep === 1 ? 'filled' : 'outlined'} 
+              size="small"
+              sx={{ fontWeight: 700 }}
+            />
+            <Chip 
+              icon={<KeyIcon />} 
+              label="2. Verify OTP" 
+              color={forgotStep === 2 ? 'primary' : 'default'} 
+              variant={forgotStep === 2 ? 'filled' : 'outlined'} 
+              size="small"
+              sx={{ fontWeight: 700 }}
+            />
+            <Chip 
+              icon={<LockResetIcon />} 
+              label="3. New Password" 
+              color={forgotStep === 3 ? 'success' : 'default'} 
+              variant={forgotStep === 3 ? 'filled' : 'outlined'} 
+              size="small"
+              sx={{ fontWeight: 700 }}
+            />
+          </Box>
+
+          {forgotError && <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>{forgotError}</Alert>}
+          {forgotSuccess && <Alert severity="success" sx={{ mb: 2.5, borderRadius: 2 }}>{forgotSuccess}</Alert>}
+          {generatedOtpMsg && (
+            <Alert severity="info" icon={<KeyIcon />} sx={{ mb: 2.5, borderRadius: 2, bgcolor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid #0284c7' }}>
+              <strong>Email Verification OTP Generated:</strong> {generatedOtpMsg}
+            </Alert>
+          )}
+
+          {/* STEP 1: Request OTP */}
+          {forgotStep === 1 && (
+            <form onSubmit={handleSendForgotPasswordOtp}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.6 }}>
+                  Enter your registered account email address. We will send a 6-digit verification code to verify your identity before allowing a password reset.
+                </Typography>
+                <TextField 
+                  label="Registered Email Address" 
+                  type="email"
+                  variant="outlined" 
+                  fullWidth 
+                  required
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#ffffff', fontSize: '1rem' },
+                    '& .MuiInputLabel-root': { color: '#94a3b8' },
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'rgba(255,255,255,0.06)',
+                      borderRadius: '12px !important',
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                    }
+                  }}
+                />
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  size="large"
+                  disabled={forgotLoading}
+                  sx={{ 
+                    py: 1.4, 
+                    fontWeight: 800,
+                    borderRadius: '12px !important',
+                    bgcolor: '#0284c7',
+                    '&:hover': { bgcolor: '#0369a1' }
+                  }}
+                >
+                  {forgotLoading ? 'Sending Code...' : 'Send Verification Code'}
+                </Button>
+              </Box>
+            </form>
+          )}
+
+          {/* STEP 2: Verify OTP */}
+          {forgotStep === 2 && (
+            <form onSubmit={handleVerifyOtpCode}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.6 }}>
+                  Please enter the 6-digit verification code sent to <strong>{forgotEmail}</strong>. Email verification is mandatory to reset your password.
+                </Typography>
+                <TextField 
+                  label="6-Digit Verification Code (OTP)" 
+                  variant="outlined" 
+                  fullWidth 
+                  required
+                  value={forgotOtp}
+                  onChange={(e) => setForgotOtp(e.target.value)}
+                  placeholder="e.g. 123456"
+                  inputProps={{ maxLength: 6 }}
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#38bdf8', fontSize: '1.2rem', fontWeight: 800, letterSpacing: '4px', textAlign: 'center' },
+                    '& .MuiInputLabel-root': { color: '#94a3b8' },
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'rgba(255,255,255,0.06)',
+                      borderRadius: '12px !important',
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                    }
+                  }}
+                />
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button 
+                    variant="outlined"
+                    onClick={() => setForgotStep(1)}
+                    sx={{ py: 1.4, px: 3, color: '#94a3b8', borderColor: 'rgba(255,255,255,0.2)', textTransform: 'none', fontWeight: 700, borderRadius: '12px !important' }}
+                  >
+                    Back
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    variant="contained" 
+                    size="large"
+                    fullWidth
+                    disabled={forgotLoading}
+                    sx={{ 
+                      py: 1.4, 
+                      fontWeight: 800,
+                      borderRadius: '12px !important',
+                      bgcolor: '#0284c7',
+                      '&:hover': { bgcolor: '#0369a1' }
+                    }}
+                  >
+                    {forgotLoading ? 'Verifying...' : 'Verify Code'}
+                  </Button>
+                </Box>
+              </Box>
+            </form>
+          )}
+
+          {/* STEP 3: Enter New Password with Eye Icon Button */}
+          {forgotStep === 3 && (
+            <form onSubmit={handleResetPasswordSubmit}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                <Typography variant="body2" sx={{ color: '#34d399', fontWeight: 600 }}>
+                  ✓ Email Verified! Set your new account password below.
+                </Typography>
+
+                <TextField 
+                  label="New Password" 
+                  type={showNewPassword ? 'text' : 'password'}
+                  variant="outlined" 
+                  fullWidth 
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          edge="end"
+                          sx={{ color: '#94a3b8' }}
+                        >
+                          {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#ffffff', fontSize: '1rem' },
+                    '& .MuiInputLabel-root': { color: '#94a3b8' },
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'rgba(255,255,255,0.06)',
+                      borderRadius: '12px !important',
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                    }
+                  }}
+                />
+
+                <TextField 
+                  label="Confirm New Password" 
+                  type={showNewPassword ? 'text' : 'password'}
+                  variant="outlined" 
+                  fullWidth 
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  sx={{
+                    '& .MuiInputBase-input': { color: '#ffffff', fontSize: '1rem' },
+                    '& .MuiInputLabel-root': { color: '#94a3b8' },
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: 'rgba(255,255,255,0.06)',
+                      borderRadius: '12px !important',
+                      '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' }
+                    }
+                  }}
+                />
+
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  size="large"
+                  disabled={forgotLoading}
+                  sx={{ 
+                    py: 1.5, 
+                    fontWeight: 800,
+                    borderRadius: '12px !important',
+                    background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 4px 14px 0 rgba(16, 185, 129, 0.4)'
+                  }}
+                >
+                  {forgotLoading ? 'Updating Password...' : 'Reset Password & Save'}
+                </Button>
+              </Box>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
 
 export default Login;
+
