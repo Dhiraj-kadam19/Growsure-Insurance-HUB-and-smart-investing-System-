@@ -11,24 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Configure DB Context (MySQL / InMemory / SQLite / SQL Server)
+// Configure DB Context (MySQL / InMemory / SQL Server)
 var rawConn = builder.Configuration.GetConnectionString("DefaultConnection");
+bool isRender = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER"));
 
-bool isLocalhostOrMissing = string.IsNullOrWhiteSpace(rawConn) || 
+bool isLocalhostOrMissing = isRender ||
+                            string.IsNullOrWhiteSpace(rawConn) || 
                             rawConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) || 
-                            rawConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+                            rawConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                            rawConn.Contains("Data Source", StringComparison.OrdinalIgnoreCase) ||
+                            rawConn.EndsWith(".db", StringComparison.OrdinalIgnoreCase);
 
 if (isLocalhostOrMissing)
 {
     builder.Services.AddDbContext<GrowsureContext>(options =>
         options.UseInMemoryDatabase("GrowsureDb"));
 }
-else if (rawConn!.Contains("Data Source", StringComparison.OrdinalIgnoreCase) || rawConn.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
-{
-    builder.Services.AddDbContext<GrowsureContext>(options =>
-        options.UseSqlite(rawConn));
-}
-else if (rawConn.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
+else if (rawConn!.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
 {
     builder.Services.AddDbContext<GrowsureContext>(options =>
         options.UseSqlServer(rawConn));
