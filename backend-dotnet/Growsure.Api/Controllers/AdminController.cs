@@ -106,5 +106,134 @@ namespace Growsure.Api.Controllers
                 totalAUM = funds.Sum(f => f.AumCrores)
             });
         }
+
+        [HttpGet("utr/pending")]
+        public async Task<IActionResult> GetPendingUtrTransactions()
+        {
+            var pendingTxns = await _context.Transactions
+                .Include(t => t.User)
+                .Where(t => t.Status == "PENDING_APPROVAL")
+                .OrderByDescending(t => t.TransactionDate)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.UserId,
+                    UserName = t.User != null ? t.User.Name : "User #" + t.UserId,
+                    UserEmail = t.User != null ? t.User.Email : "",
+                    t.OrderId,
+                    UtrNumber = t.PaymentId,
+                    t.Amount,
+                    t.PaymentType,
+                    t.ReferenceId,
+                    t.Status,
+                    t.TransactionDate
+                })
+                .ToListAsync();
+
+            return Ok(pendingTxns);
+        }
+
+        [HttpPut("utr/{id}/approve")]
+        public async Task<IActionResult> ApproveUtrTransaction(int id)
+        {
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null) return NotFound("Transaction not found");
+
+            if (transaction.Status == "SUCCESS")
+            {
+                return BadRequest("Transaction is already approved.");
+            }
+
+            var user = await _context.Users.FindAsync(transaction.UserId);
+            if (user == null) return NotFound("User not found");
+
+            var holder = await _context.PolicyHolders.FirstOrDefaultAsync(h => h.UserId == user.Id);
+            if (holder == null)
+            {
+                holder = new PolicyHolder
+                {
+                    UserId = user.Id,
+                    Aadhaar = "200000000000",
+                    Pan = "ABCPE1234F",
+                    Dob = new DateTime(1995, 1, 1),
+                    Contact = "9876543210",
+                    Address = "Growsure Registered Address"
+                };
+                _context.PolicyHolders.Add(holder);
+                await _context.SaveChangesAsync();
+            }
+
+            transaction.Status = "SUCCESS";
+            transaction.TransactionDate = DateTime.UtcNow;
+
+            if (transaction.PaymentType.Equals("POLICY_PREMIUM", StringComparison.OrdinalIgnoreCase))
+            {
+                var policyId = transaction.ReferenceId ?? 0;
+                var policy = await _context.Policies.FindAsync(policyId);
+                if (policy != null)
+                {
+                    var purchase = new PurchasedPolicy
+                    {
+                        PolicyHolderId = holder.Id,
+                        PolicyId = policy.Id,
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddYears(1),
+                        Status = "ACTIVE",
+                        PolicyNumber = "POL-" + Guid.NewGuid().ToString().Replace("-", "").Substring(0, 12).ToUpper()
+                    };
+
+                    _context.PurchasedPolicies.Add(purchase);
+                    await _context.SaveChangesAsync();
+
+                    var nominee = new Nominee
+                    {
+                        PurchaseId = purchase.Id,
+                        Name = "Nominee of " + user.Name,
+                        Relationship = "Spouse",
+                        Contact = holder.Contact
+                    };
+
+                    _context.Nominees.Add(nominee);
+                    transaction.ReferenceId = purchase.Id;
+                }
+            }
+            else if (transaction.PaymentType.StartsWith("MUTUAL_FUND", StringComparison.OrdinalIgnoreCase))
+            {
+                var fundId = transaction.ReferenceId ?? 0;
+                var fund = await _context.Funds.FindAsync(fundId);
+                if (fund != null)
+                {
+                    var isSip = transaction.PaymentType.Equals("MUTUAL_FUND_SIP", StringComparison.OrdinalIgnoreCase);
+                    var investment = new Investment
+                    {
+                        PolicyHolderId = holder.Id,
+                        FundId = fund.Id,
+                        InvestmentAmount = transaction.Amount,
+                        SipAmount = isSip ? transaction.Amount : 0,
+                        InvestmentType = isSip ? "SIP" : "LUMPSUM",
+                        DayOfMonth = DateTime.UtcNow.Day,
+                        StartDate = DateTime.UtcNow,
+                        Status = "ACTIVE"
+                    };
+
+                    _context.Investments.Add(investment);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Payment approved and completed successfully!", transactionId = transaction.Id, status = "SUCCESS" });
+        }
+
+        [HttpPut("utr/{id}/reject")]
+        public async Task<IActionResult> RejectUtrTransaction(int id)
+        {
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null) return NotFound("Transaction not found");
+
+            transaction.Status = "FAILED";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Transaction payment rejected successfully.", transactionId = transaction.Id, status = "FAILED" });
+        }
     }
 }

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Grid, Card, CardContent, Typography, LinearProgress, Divider } from '@mui/material';
+import { 
+  Box, Grid, Card, CardContent, Typography, LinearProgress, Divider,
+  Table, TableHead, TableRow, TableCell, TableBody, Button, Chip, Alert, Snackbar, Paper
+} from '@mui/material';
 import { Line, Bar } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, 
@@ -9,6 +12,9 @@ import PeopleIcon from '@mui/icons-material/People';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 
 import api from '../../services/api';
 
@@ -18,27 +24,59 @@ const AdminDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<any>(null);
   const [revenue, setRevenue] = useState<any>(null);
   const [funds, setFunds] = useState<any>(null);
+  const [pendingUtrs, setPendingUtrs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  const fetchAdminStats = async () => {
+    try {
+      const [metRes, revRes, fundRes, utrRes] = await Promise.all([
+        api.get('/api/admin/metrics'),
+        api.get('/api/admin/analytics/revenue'),
+        api.get('/api/admin/analytics/funds'),
+        api.get('/api/admin/utr/pending')
+      ]);
+      setMetrics(metRes.data);
+      setRevenue(revRes.data);
+      setFunds(fundRes.data);
+      setPendingUtrs(utrRes.data || []);
+    } catch (err) {
+      console.error('Error fetching admin report', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAdminStats = async () => {
-      try {
-        const [metRes, revRes, fundRes] = await Promise.all([
-          api.get('/api/admin/metrics'),
-          api.get('/api/admin/analytics/revenue'),
-          api.get('/api/admin/analytics/funds')
-        ]);
-        setMetrics(metRes.data);
-        setRevenue(revRes.data);
-        setFunds(fundRes.data);
-      } catch (err) {
-        console.error('Error fetching admin report', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchAdminStats();
   }, []);
+
+  const handleApproveUtr = async (id: number) => {
+    setActionLoading(id);
+    try {
+      await api.put(`/api/admin/utr/${id}/approve`);
+      setActionSuccess(`Payment UTR #${id} approved successfully! User policy/investment activated.`);
+      fetchAdminStats();
+    } catch (err: any) {
+      console.error('Error approving UTR', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectUtr = async (id: number) => {
+    setActionLoading(id);
+    try {
+      await api.put(`/api/admin/utr/${id}/reject`);
+      setActionSuccess(`Payment UTR #${id} rejected.`);
+      fetchAdminStats();
+    } catch (err: any) {
+      console.error('Error rejecting UTR', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -82,7 +120,7 @@ const AdminDashboard: React.FC = () => {
         🔑 Platform Admin Control
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Consolidated platform metrics, IRDAI compliance controls, fund marketplace volumes, and platform commission margins.
+        Consolidated platform metrics, UTR payment verification approvals, fund marketplace volumes, and platform commission margins.
       </Typography>
 
       {/* KPI Cards */}
@@ -136,6 +174,111 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Pending UTR Verification Table Section */}
+      <Card className="glass-card" sx={{ mb: 4, p: 2 }}>
+        <CardContent sx={{ p: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <AccountBalanceWalletIcon color="secondary" sx={{ fontSize: 30 }} />
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  Pending UTR Payment Approvals ({pendingUtrs.length})
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  User submitted 12-digit UPI UTR Codes requiring Admin acceptance to activate policies/investments.
+                </Typography>
+              </Box>
+            </Box>
+            <Chip 
+              label={pendingUtrs.length > 0 ? `${pendingUtrs.length} Action Required` : 'All Verified ✓'} 
+              color={pendingUtrs.length > 0 ? 'warning' : 'success'} 
+              sx={{ fontWeight: 800 }} 
+            />
+          </Box>
+
+          {pendingUtrs.length === 0 ? (
+            <Alert severity="success" variant="outlined" sx={{ borderRadius: 3, fontWeight: 700 }}>
+              No pending UTR payment approvals. All user UPI transactions are up to date!
+            </Alert>
+          ) : (
+            <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: 'transparent' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: 'rgba(255, 255, 255, 0.05)' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800 }}>User Name & Email</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>12-Digit UTR Code</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Amount (₹)</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Payment Type</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'right' }}>Admin Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {pendingUtrs.map((u: any) => (
+                    <TableRow key={u.id} hover>
+                      <TableCell>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{u.userName}</Typography>
+                        <Typography variant="caption" color="text.secondary">{u.userEmail}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={u.utrNumber || 'N/A'} 
+                          size="small" 
+                          color="primary" 
+                          variant="outlined" 
+                          sx={{ fontFamily: 'monospace', fontWeight: 800, letterSpacing: 0.8 }} 
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 800, color: '#10b981' }}>
+                        ₹{u.amount?.toLocaleString('en-IN')}
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={u.paymentType?.replace('_', ' ')} 
+                          size="small" 
+                          variant="filled" 
+                          color="secondary"
+                          sx={{ fontSize: '0.65rem', fontWeight: 800 }} 
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
+                        {new Date(u.transactionDate).toLocaleString('en-IN')}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: 'right' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            onClick={() => handleApproveUtr(u.id)}
+                            disabled={actionLoading === u.id}
+                            startIcon={<CheckCircleIcon />}
+                            sx={{ fontWeight: 800, borderRadius: 2 }}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={() => handleRejectUtr(u.id)}
+                            disabled={actionLoading === u.id}
+                            startIcon={<CancelIcon />}
+                            sx={{ fontWeight: 800, borderRadius: 2 }}
+                          >
+                            Reject
+                          </Button>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Revenue breakdown card */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -217,6 +360,17 @@ const AdminDashboard: React.FC = () => {
           </Grid>
         ))}
       </Grid>
+
+      <Snackbar 
+        open={Boolean(actionSuccess)} 
+        autoHideDuration={3000} 
+        onClose={() => setActionSuccess(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" variant="filled" sx={{ borderRadius: 3 }}>
+          {actionSuccess}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

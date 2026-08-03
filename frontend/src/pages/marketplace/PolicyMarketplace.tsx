@@ -339,14 +339,26 @@ const PolicyMarketplace: React.FC = () => {
       {/* UPI QR Payment Modal (Center Pop-up Window) */}
       <UpiQrPaymentModal
         open={paymentOverlayOpen}
-        onClose={() => setPaymentOverlayOpen(false)}
+        onClose={(failed) => {
+          setPaymentOverlayOpen(false);
+          if (failed) {
+            setError('Payment Failed: Session timed out (2 minute limit reached). Please try again.');
+          }
+        }}
         amount={paymentData?.amount || selectedPolicy?.premiumAmount || 0}
         payerUpiId={upiId}
         receiverUpiId="sarveshkulkarni.2003@ybl"
         receiverName="Sarvesh Sachin Kulkarni"
         bankInfo="Kotak Mahindra Bank - 2003"
         orderTitle={`Policy Purchase: ${selectedPolicy?.policyName}`}
+        orderId={paymentData?.orderId}
+        paymentType="POLICY_PREMIUM"
+        referenceId={selectedPolicy?.id}
         onPaymentSuccess={handleSimulatePaymentSuccess}
+        onPaymentSubmitted={(utr) => {
+          setError(null);
+          setSuccessMessage(`UTR ${utr} submitted for Admin approval! Your policy will be activated once Admin accepts your payment.`);
+        }}
       />
 
       {/* Success Modal */}

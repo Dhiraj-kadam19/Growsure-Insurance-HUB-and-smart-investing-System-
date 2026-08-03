@@ -32,6 +32,57 @@ namespace Growsure.Api.Controllers
             public string Signature { get; set; } = string.Empty;
         }
 
+        public class UtrSubmitDto
+        {
+            public string OrderId { get; set; } = string.Empty;
+            public string UtrNumber { get; set; } = string.Empty;
+            public double Amount { get; set; }
+            public string PaymentType { get; set; } = string.Empty;
+            public int ReferenceId { get; set; }
+        }
+
+        [HttpPost("submit-utr")]
+        public async Task<IActionResult> SubmitUtr([FromBody] UtrSubmitDto dto)
+        {
+            var email = User.Identity?.Name;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return NotFound("User not found");
+
+            var cleanUtr = dto.UtrNumber?.Replace(" ", "").Trim() ?? string.Empty;
+            if (cleanUtr.Length != 12 || System.Text.RegularExpressions.Regex.IsMatch(cleanUtr, @"[^\d]"))
+            {
+                return BadRequest("UTR Number must be exactly 12 numeric digits.");
+            }
+
+            var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.OrderId == dto.OrderId);
+            if (transaction == null)
+            {
+                transaction = new Transaction
+                {
+                    UserId = user.Id,
+                    OrderId = string.IsNullOrWhiteSpace(dto.OrderId) ? "order_utr_" + Guid.NewGuid().ToString().Replace("-", "").Substring(0, 16) : dto.OrderId,
+                    Amount = dto.Amount,
+                    PaymentType = dto.PaymentType,
+                    ReferenceId = dto.ReferenceId
+                };
+                _context.Transactions.Add(transaction);
+            }
+
+            transaction.PaymentId = cleanUtr;
+            transaction.Status = "PENDING_APPROVAL";
+            transaction.TransactionDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "UTR submitted successfully for Admin approval",
+                transactionId = transaction.Id,
+                utrNumber = cleanUtr,
+                status = "PENDING_APPROVAL"
+            });
+        }
+
         [HttpPost("create-order")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderRequestDto dto)
         {

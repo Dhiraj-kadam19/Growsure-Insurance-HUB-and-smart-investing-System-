@@ -1302,16 +1302,25 @@ const FundMarketplace: React.FC = () => {
       {/* UPI QR Payment Modal (Root Level Center Pop-up Window) */}
       <UpiQrPaymentModal
         open={upiCollectModalOpen}
-        onClose={() => setUpiCollectModalOpen(false)}
+        onClose={(failed) => {
+          setUpiCollectModalOpen(false);
+          if (failed) {
+            setToastMessage('❌ Payment Failed: Session timed out (2 minute limit reached). Please try again.');
+          }
+        }}
         amount={totalCartAmount}
         payerUpiId={upiId}
         receiverUpiId="sarveshkulkarni.2003@ybl"
         receiverName="Sarvesh Sachin Kulkarni"
         bankInfo="Kotak Mahindra Bank - 2003"
         orderTitle="Mutual Funds Investment"
+        paymentType="MUTUAL_FUND_LUMPSUM"
         onPaymentSuccess={() => {
           setUpiCollectModalOpen(false);
           handleFinalizePaymentBatch();
+        }}
+        onPaymentSubmitted={(utr) => {
+          setToastMessage(`⏳ UTR ${utr} submitted for Admin approval! Your investment will be activated once Admin accepts your payment.`);
         }}
       />
 
