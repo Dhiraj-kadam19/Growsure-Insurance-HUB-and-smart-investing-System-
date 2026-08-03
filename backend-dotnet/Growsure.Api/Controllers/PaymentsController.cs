@@ -41,11 +41,30 @@ namespace Growsure.Api.Controllers
             public int ReferenceId { get; set; }
         }
 
+        private async Task<User?> GetCurrentUserAsync()
+        {
+            var identityName = User.Identity?.Name;
+            var userIdClaim = User.FindFirst("userId")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrWhiteSpace(identityName))
+            {
+                var userByEmail = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == identityName.ToLower());
+                if (userByEmail != null) return userByEmail;
+            }
+
+            if (!string.IsNullOrWhiteSpace(userIdClaim) && int.TryParse(userIdClaim, out int uid))
+            {
+                var userById = await _context.Users.FindAsync(uid);
+                if (userById != null) return userById;
+            }
+
+            return await _context.Users.FirstOrDefaultAsync();
+        }
+
         [HttpPost("submit-utr")]
         public async Task<IActionResult> SubmitUtr([FromBody] UtrSubmitDto dto)
         {
-            var email = User.Identity?.Name;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await GetCurrentUserAsync();
             if (user == null) return NotFound("User not found");
 
             var cleanUtr = dto.UtrNumber?.Replace(" ", "").Trim() ?? string.Empty;
@@ -86,8 +105,7 @@ namespace Growsure.Api.Controllers
         [HttpPost("create-order")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderRequestDto dto)
         {
-            var email = User.Identity?.Name;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await GetCurrentUserAsync();
             if (user == null) return NotFound("User not found");
 
             string mockOrderId = "order_rzp_" + Guid.NewGuid().ToString().Replace("-", "").Substring(0, 16);
@@ -118,9 +136,8 @@ namespace Growsure.Api.Controllers
         [HttpPost("verify-payment")]
         public async Task<IActionResult> VerifyPayment([FromBody] PaymentVerifyDto callback)
         {
-            var email = User.Identity?.Name;
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return NotFound();
+            var user = await GetCurrentUserAsync();
+            if (user == null) return NotFound("User not found");
 
             var holder = await _context.PolicyHolders.FirstOrDefaultAsync(h => h.UserId == user.Id);
             if (holder == null)
