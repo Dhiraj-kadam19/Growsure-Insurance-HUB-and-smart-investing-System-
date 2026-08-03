@@ -32,6 +32,11 @@ const PolicyMarketplace: React.FC = () => {
   const [nomineeContact, setNomineeContact] = useState('');
   const [upiId, setUpiId] = useState('amit.sharma@okaxis');
 
+  // Field validation errors
+  const [nomineeNameError, setNomineeNameError] = useState('');
+  const [nomineeContactError, setNomineeContactError] = useState('');
+  const [upiIdError, setUpiIdError] = useState('');
+
   // Payment simulated dialog
   const [paymentOverlayOpen, setPaymentOverlayOpen] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
@@ -65,10 +70,56 @@ const PolicyMarketplace: React.FC = () => {
 
   const handleOpenBuy = (policy: any) => {
     setSelectedPolicy(policy);
+    setNomineeNameError('');
+    setNomineeContactError('');
+    setUpiIdError('');
     setBuyDialogOpen(true);
   };
 
+  const validateCheckoutFields = () => {
+    let isValid = true;
+
+    // Nominee Name Validation
+    const cleanName = nomineeName.trim();
+    if (!cleanName) {
+      setNomineeNameError('Nominee Full Name is required.');
+      isValid = false;
+    } else if (!/^[a-zA-Z\s]{3,50}$/.test(cleanName)) {
+      setNomineeNameError('Nominee Name must contain only alphabets (minimum 3 letters).');
+      isValid = false;
+    } else {
+      setNomineeNameError('');
+    }
+
+    // Nominee Contact Validation
+    const cleanContact = nomineeContact.trim();
+    if (!cleanContact) {
+      setNomineeContactError('Nominee Contact Number is required.');
+      isValid = false;
+    } else if (!/^[6-9]\d{9}$/.test(cleanContact) || /^(\d)\1{9}$/.test(cleanContact)) {
+      setNomineeContactError('Enter a valid 10-digit mobile number starting with 6-9.');
+      isValid = false;
+    } else {
+      setNomineeContactError('');
+    }
+
+    // UPI ID Validation
+    const cleanUpi = upiId.trim();
+    if (!cleanUpi) {
+      setUpiIdError('Your UPI ID / VPA is required.');
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(cleanUpi)) {
+      setUpiIdError('Enter a valid UPI ID (e.g. username@okaxis or 9876543210@paytm).');
+      isValid = false;
+    } else {
+      setUpiIdError('');
+    }
+
+    return isValid;
+  };
+
   const handleCreateOrder = async () => {
+    if (!validateCheckoutFields()) return;
     try {
       const response = await api.post('/api/payments/create-order', {
         amount: selectedPolicy.premiumAmount,
@@ -295,17 +346,23 @@ const PolicyMarketplace: React.FC = () => {
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
           <Typography variant="subtitle2">Selected: <strong>{selectedPolicy?.policyName}</strong> (₹{selectedPolicy?.premiumAmount}/yr)</Typography>
           <TextField 
-            label="Nominee Full Name" 
+            label="Nominee Full Name *" 
             value={nomineeName} 
-            onChange={(e) => setNomineeName(e.target.value)} 
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^a-zA-Z\s]/g, '').slice(0, 50);
+              setNomineeName(val);
+              if (val.trim().length >= 3) setNomineeNameError('');
+            }} 
+            error={Boolean(nomineeNameError)}
+            helperText={nomineeNameError || 'Alphabets only (e.g. Rahul Sharma)'}
             fullWidth 
           />
           <FormControl fullWidth>
-            <InputLabel id="rel-label">Relationship to Applicant</InputLabel>
+            <InputLabel id="rel-label">Relationship to Applicant *</InputLabel>
             <Select
               labelId="rel-label"
               value={nomineeRelationship}
-              label="Relationship to Applicant"
+              label="Relationship to Applicant *"
               onChange={(e) => setNomineeRelationship(e.target.value)}
             >
               <MenuItem value="Spouse">Spouse</MenuItem>
@@ -315,24 +372,41 @@ const PolicyMarketplace: React.FC = () => {
             </Select>
           </FormControl>
           <TextField 
-            label="Nominee Contact Number" 
+            label="Nominee Contact Number *" 
             value={nomineeContact} 
-            onChange={(e) => setNomineeContact(e.target.value)} 
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+              setNomineeContact(val);
+              if (/^[6-9]\d{9}$/.test(val) && !/^(\d)\1{9}$/.test(val)) setNomineeContactError('');
+            }} 
+            inputProps={{ maxLength: 10 }}
+            error={Boolean(nomineeContactError)}
+            helperText={nomineeContactError || '10-digit Indian mobile number'}
             fullWidth 
           />
           <Divider sx={{ my: 0.5 }} />
           <TextField 
-            label="Your UPI ID / VPA (Payer)" 
+            label="Your UPI ID / VPA (Payer) *" 
             value={upiId} 
-            onChange={(e) => setUpiId(e.target.value)} 
+            onChange={(e) => {
+              const val = e.target.value.toLowerCase().trim();
+              setUpiId(val);
+              if (/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(val)) setUpiIdError('');
+            }} 
             placeholder="yourname@ybl / phone@paytm"
+            error={Boolean(upiIdError)}
             fullWidth 
-            helperText="Enter your UPI ID to proceed to QR scanner payment"
+            helperText={upiIdError || 'Enter your UPI ID to proceed to QR scanner payment'}
           />
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setBuyDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" color="primary" onClick={handleCreateOrder} disabled={!nomineeName || !upiId}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleCreateOrder} 
+            disabled={!nomineeName || !upiId || !nomineeContact}
+          >
             Proceed to Payment
           </Button>
         </DialogActions>
