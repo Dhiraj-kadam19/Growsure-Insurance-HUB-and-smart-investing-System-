@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-  const envUrl = import.meta.env?.VITE_API_URL;
+  const envUrl = import.meta.env?.VITE_API_URL || import.meta.env?.VITE_API_BASE_URL;
   if (envUrl && envUrl.trim() !== '') {
-    return envUrl;
+    return envUrl.trim().replace(/\/+$/, '');
   }
   // In local Vite dev mode (port 3000), target localhost backend on port 8081
   if (typeof window !== 'undefined' && window.location.port === '3000') {
@@ -11,8 +11,8 @@ const getBaseUrl = () => {
     const port = backend === 'springboot' ? '8080' : '8081';
     return `http://${window.location.hostname}:${port}`;
   }
-  // In production (port 80 Nginx Docker deployment), use relative '/api' proxied to backend
-  return '/api';
+  // In production (Vercel deployment), use relative '/api' proxied via vercel.json
+  return '';
 };
 
 const api = axios.create({
@@ -22,10 +22,10 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to attach JWT token and dynamically reload base URL on preference changes
+// Request interceptor to attach JWT token and dynamically reload base URL
 api.interceptors.request.use(
   (config) => {
-    config.baseURL = getBaseUrl(); // Refresh base URL dynamically
+    config.baseURL = getBaseUrl();
     const token = localStorage.getItem('growsure_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
