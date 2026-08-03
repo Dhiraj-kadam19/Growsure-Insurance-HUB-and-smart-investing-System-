@@ -11,7 +11,6 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import LockIcon from '@mui/icons-material/Lock';
 import CancelIcon from '@mui/icons-material/Cancel';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 
@@ -29,7 +28,7 @@ interface UpiQrPaymentModalProps {
   orderId?: string;
   paymentType?: string;
   referenceId?: number;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess?: () => void;
   onPaymentSubmitted?: (utrNumber: string) => void;
 }
 
@@ -98,7 +97,7 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
   orderId,
   paymentType = 'POLICY_PREMIUM',
   referenceId,
-  onPaymentSuccess,
+  onPaymentSuccess: _onPaymentSuccess,
   onPaymentSubmitted
 }) => {
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes countdown (120 seconds)
