@@ -12,24 +12,33 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 // Configure DB Context (MySQL / SQLite / SQL Server)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=localhost;Port=3306;Database=growsure;User=root;Password=MySql@123;";
+var rawConn = builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<GrowsureContext>(options =>
+bool isLocalhostOrMissing = string.IsNullOrWhiteSpace(rawConn) || 
+                            rawConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) || 
+                            rawConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+
+if (isLocalhostOrMissing || rawConn!.Contains("Data Source", StringComparison.OrdinalIgnoreCase) || rawConn.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
 {
-    if (connectionString.Contains("Data Source", StringComparison.OrdinalIgnoreCase) || connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
-    {
-        options.UseSqlite(connectionString);
-    }
-    else if (connectionString.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
-    {
-        options.UseSqlServer(connectionString);
-    }
-    else
-    {
-        options.UseMySQL(connectionString);
-    }
-});
+    builder.Services.AddDbContext<GrowsureContext>(options =>
+        options.UseSqlite("Data Source=growsure.db"));
+}
+else if (rawConn.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddDbContext<GrowsureContext>(options =>
+        options.UseSqlServer(rawConn));
+}
+else
+{
+    builder.Services.AddDbContext<GrowsureContext>(options =>
+        options.UseMySql(rawConn, new MySqlServerVersion(new Version(8, 0, 31)), mysqlOptions =>
+        {
+            mysqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorNumbersToAdd: null);
+        }));
+}
 
 
 
