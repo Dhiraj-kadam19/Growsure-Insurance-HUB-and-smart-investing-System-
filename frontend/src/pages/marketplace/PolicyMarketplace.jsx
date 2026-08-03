@@ -154,13 +154,13 @@ const PolicyMarketplace = () => {
   };
 
   const filteredPolicies = policiesList.filter(policy => {
-    const matchesCategory = category === '' || 
-      (policy.category && policy.category.toUpperCase() === category.toUpperCase());
-    const matchesSearch = search === '' || 
-      policy.policyName.toLowerCase().includes(search.toLowerCase()) ||
-      (policy.insurer?.companyName && policy.insurer.companyName.toLowerCase().includes(search.toLowerCase()));
-    const matchesPremium = policy.premiumAmount <= maxPremium;
-    const matchesCoverage = policy.coverageAmount >= minCoverage;
+    const matchesCategory = !category || policy.category?.toUpperCase() === category.toUpperCase();
+    const matchesSearch = !search || 
+      policy.policyName?.toLowerCase().includes(search.toLowerCase()) ||
+      policy.insurer?.companyName?.toLowerCase().includes(search.toLowerCase());
+    const matchesPremium = !maxPremium || policy.premiumAmount <= maxPremium;
+    const matchesCoverage = !minCoverage || policy.coverageAmount >= minCoverage;
+
     return matchesCategory && matchesSearch && matchesPremium && matchesCoverage;
   });
 
