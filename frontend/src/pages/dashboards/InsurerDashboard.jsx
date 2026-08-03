@@ -18,10 +18,10 @@ import api from '../../services/api';
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement, Filler);
 
-const InsurerDashboard: React.FC = () => {
-  const [profile, setProfile] = useState<any>(null);
-  const [policies, setPolicies] = useState<any[]>([]);
-  const [claims, setClaims] = useState<any[]>([]);
+const InsurerDashboard = () => {
+  const [profile, setProfile] = useState(null);
+  const [policies, setPolicies] = useState([]);
+  const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

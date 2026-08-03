@@ -21,15 +21,15 @@ const GOAL_PRESETS = [
   'World Travel & Emergency Buffer'
 ];
 
-const FinancialPlanner: React.FC = () => {
-  const [age, setAge] = useState<number>(26);
-  const [income, setIncome] = useState<number>(800000);
-  const [riskAppetite, setRiskAppetite] = useState<string>('HIGH');
-  const [goals, setGoals] = useState<string>('Retirement at 60 & Home Purchase');
+const FinancialPlanner = () => {
+  const [age, setAge] = useState(26);
+  const [income, setIncome] = useState(800000);
+  const [riskAppetite, setRiskAppetite] = useState('HIGH');
+  const [goals, setGoals] = useState('Retirement at 60 & Home Purchase');
   const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState<any>(null);
+  const [plan, setPlan] = useState(null);
 
-  const handleGeneratePlan = async (e: React.FormEvent) => {
+  const handleGeneratePlan = async (e) => {
     e.preventDefault();
     setLoading(true);
     setPlan(null);
@@ -79,7 +79,7 @@ const FinancialPlanner: React.FC = () => {
                       value={age} 
                       min={18} 
                       max={65} 
-                      onChange={(_, val) => setAge(val as number)}
+                      onChange={(_, val) => setAge(val)}
                       color="primary"
                     />
                   </Box>

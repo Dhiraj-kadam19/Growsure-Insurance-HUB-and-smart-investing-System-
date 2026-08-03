@@ -8,12 +8,12 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 import api from '../../services/api';
 
-const CustomerDashboard: React.FC = () => {
-  const [profile, setProfile] = useState<any>(null);
-  const [purchasedPolicies, setPurchasedPolicies] = useState<any[]>([]);
-  const [portfolio, setPortfolio] = useState<any>(null);
-  const [claims, setClaims] = useState<any[]>([]);
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+const CustomerDashboard = () => {
+  const [profile, setProfile] = useState(null);
+  const [purchasedPolicies, setPurchasedPolicies] = useState([]);
+  const [portfolio, setPortfolio] = useState(null);
+  const [claims, setClaims] = useState([]);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -34,7 +34,7 @@ const CustomerDashboard: React.FC = () => {
         
         // Parse raw string suggestions
         if (aiRes.data && aiRes.data.length > 0) {
-          const suggestions = aiRes.data.map((item: any) => {
+          const suggestions = aiRes.data.map((item) => {
             try {
               return {
                 ...item,
@@ -183,7 +183,7 @@ const CustomerDashboard: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">No policies purchased yet.</Typography>
               ) : (
                 <List disablePadding>
-                  {purchasedPolicies.map((purch: any) => (
+                  {purchasedPolicies.map((purch) => (
                     <React.Fragment key={purch.purchaseId}>
                       <ListItem sx={{ px: 0, py: 1.5 }}>
                         <ListItemText

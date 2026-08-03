@@ -10,20 +10,20 @@ import AddCardIcon from '@mui/icons-material/AddCard';
 
 import api from '../../services/api';
 
-const PolicyEditor: React.FC = () => {
-  const [policies, setPolicies] = useState<any[]>([]);
+const PolicyEditor = () => {
+  const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState(null);
 
   // Form Fields State
   const [policyName, setPolicyName] = useState('');
   const [category, setCategory] = useState('HEALTH');
-  const [coverageAmount, setCoverageAmount] = useState<number>(500000);
-  const [premiumAmount, setPremiumAmount] = useState<number>(8000);
+  const [coverageAmount, setCoverageAmount] = useState(500000);
+  const [premiumAmount, setPremiumAmount] = useState(8000);
   const [benefits, setBenefits] = useState('["Cashless hospitalization", "ICU charge coverage"]');
   const [exclusions, setExclusions] = useState('["Cosmetic surgery"]');
-  const [waitingPeriod, setWaitingPeriod] = useState<number>(24);
-  const [settlementRatio, setSettlementRatio] = useState<number>(97.5);
+  const [waitingPeriod, setWaitingPeriod] = useState(24);
+  const [settlementRatio, setSettlementRatio] = useState(97.5);
 
   const fetchPolicies = async () => {
     try {
@@ -40,7 +40,7 @@ const PolicyEditor: React.FC = () => {
     fetchPolicies();
   }, []);
 
-  const handleSavePolicy = async (e: React.FormEvent) => {
+  const handleSavePolicy = async (e) => {
     e.preventDefault();
     const payload = {
       policyName,
@@ -74,7 +74,7 @@ const PolicyEditor: React.FC = () => {
     }
   };
 
-  const handleStartEdit = (policy: any) => {
+  const handleStartEdit = (policy) => {
     setEditingId(policy.id);
     setPolicyName(policy.policyName);
     setCategory(policy.category);
@@ -86,7 +86,7 @@ const PolicyEditor: React.FC = () => {
     setSettlementRatio(policy.claimSettlementRatio);
   };
 
-  const handleDeletePolicy = async (id: number) => {
+  const handleDeletePolicy = async (id) => {
     if (!window.confirm('Are you sure you want to deactivate this policy?')) return;
     try {
       await api.delete(`/api/policies/${id}`);

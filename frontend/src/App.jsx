@@ -20,7 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 
-import { store, RootState, logout, toggleThemeMode } from './store';
+import { store, logout, toggleThemeMode } from './store';
 import Logo from './components/Logo';
 
 // Pages imports
@@ -151,12 +151,12 @@ const lightTheme = createTheme({
   },
 });
 
-const Layout: React.FC = () => {
+const Layout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, role, name } = useSelector((state: RootState) => state.auth);
-  const { themeMode } = useSelector((state: RootState) => state.app);
+  const { isAuthenticated, role, name } = useSelector((state) => state.auth);
+  const { themeMode } = useSelector((state) => state.app);
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   if (!isAuthenticated) {
@@ -437,8 +437,8 @@ const Layout: React.FC = () => {
   );
 };
 
-const MainThemeWrapper: React.FC = () => {
-  const { themeMode } = useSelector((state: RootState) => state.app);
+const MainThemeWrapper = () => {
+  const { themeMode } = useSelector((state) => state.app);
   const theme = themeMode === 'light' ? lightTheme : darkTheme;
 
   React.useEffect(() => {
@@ -459,7 +459,7 @@ const MainThemeWrapper: React.FC = () => {
   );
 };
 
-const RootApp: React.FC = () => {
+const RootApp = () => {
   return (
     <Provider store={store}>
       <MainThemeWrapper />

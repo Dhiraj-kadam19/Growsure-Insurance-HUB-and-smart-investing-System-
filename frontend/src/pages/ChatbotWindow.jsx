@@ -8,11 +8,6 @@ import PersonIcon from '@mui/icons-material/Person';
 
 import api from '../services/api';
 
-interface ChatMessage {
-  sender: 'user' | 'bot';
-  text: string;
-}
-
 const QUICK_PROMPTS = [
   '📈 Best Mutual Funds',
   '💡 SIP vs Lumpsum',
@@ -21,17 +16,17 @@ const QUICK_PROMPTS = [
   '📋 How to File a Claim',
 ];
 
-const ChatbotWindow: React.FC = () => {
+const ChatbotWindow = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+  const [chatHistory, setChatHistory] = useState([
     { 
       sender: 'bot', 
       text: '👋 Hi! I am your Growsure Financial Copilot. Ask me anything about our 814 Mutual Funds, Term Life/Health covers, Tax Savings (80C/80D), or Claim Submissions!' 
     }
   ]);
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,7 +36,7 @@ const ChatbotWindow: React.FC = () => {
     scrollToBottom();
   }, [chatHistory, isOpen]);
 
-  const sendQuery = async (queryText: string) => {
+  const sendQuery = async (queryText) => {
     if (!queryText.trim() || loading) return;
 
     setChatHistory(prev => [...prev, { sender: 'user', text: queryText }]);
@@ -60,7 +55,7 @@ const ChatbotWindow: React.FC = () => {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
     const userMsg = message;
     setMessage('');
@@ -102,7 +97,7 @@ const ChatbotWindow: React.FC = () => {
                 key={index}
                 sx={{
                   display: 'flex',
-                  justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  justify: msg.sender === 'user' ? 'flex-end' : 'flex-start',
                   alignItems: 'flex-start',
                   gap: 1
                 }}

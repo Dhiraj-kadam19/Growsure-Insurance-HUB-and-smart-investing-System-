@@ -6,8 +6,8 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import api from '../services/api';
 import Logo from '../components/Logo';
 
-const Register: React.FC = () => {
-  const [role, setRole] = useState<'POLICY_HOLDER' | 'INSURER'>('POLICY_HOLDER');
+const Register = () => {
+  const [role, setRole] = useState('POLICY_HOLDER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,13 +21,13 @@ const Register: React.FC = () => {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [companyName, setCompanyName] = useState('');
 
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRoleChange = (_: any, newRole: 'POLICY_HOLDER' | 'INSURER') => {
+  const handleRoleChange = (_, newRole) => {
     if (newRole) {
       setRole(newRole);
       setError(null);
@@ -35,7 +35,7 @@ const Register: React.FC = () => {
     }
   };
 
-  const validateEmailValue = (val: string): string => {
+  const validateEmailValue = (val) => {
     const trimmed = val.trim();
     if (!trimmed) return 'Email address is required.';
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
@@ -45,7 +45,7 @@ const Register: React.FC = () => {
     return '';
   };
 
-  const validateContactValue = (val: string): string => {
+  const validateContactValue = (val) => {
     const trimmed = val.trim();
     if (!trimmed) return 'Contact number is required.';
     if (/[^\d]/.test(trimmed)) {
@@ -60,7 +60,7 @@ const Register: React.FC = () => {
     return '';
   };
 
-  const formatAadhaar = (val: string): string => {
+  const formatAadhaar = (val) => {
     const digits = val.replace(/\D/g, '').slice(0, 12);
     const parts = [];
     for (let i = 0; i < digits.length; i += 4) {
@@ -69,7 +69,7 @@ const Register: React.FC = () => {
     return parts.join(' ');
   };
 
-  const validateAadhaarValue = (val: string): string => {
+  const validateAadhaarValue = (val) => {
     const digits = val.replace(/\s+/g, '').trim();
     if (!digits) return 'Aadhaar number is required.';
     if (/[^\d]/.test(digits)) {
@@ -87,7 +87,7 @@ const Register: React.FC = () => {
     return '';
   };
 
-  const validateAddressValue = (val: string): string => {
+  const validateAddressValue = (val) => {
     const cleanAddr = val.trim();
     if (!cleanAddr) return 'Address details are required.';
     if (/[@#]/.test(val)) {
@@ -105,8 +105,8 @@ const Register: React.FC = () => {
     return '';
   };
 
-  const validateAll = (): boolean => {
-    const errs: Record<string, string> = {};
+  const validateAll = () => {
+    const errs = {};
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -198,8 +198,7 @@ const Register: React.FC = () => {
     return Object.keys(errs).length === 0;
   };
 
-
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (!validateAll()) {
       return;
@@ -209,7 +208,7 @@ const Register: React.FC = () => {
     setError(null);
     setSuccess(null);
 
-    const payload: any = { name, email, password, role, address };
+    const payload = { name, email, password, role, address };
 
     if (role === 'POLICY_HOLDER') {
       payload.aadhaar = aadhaar.replace(/\s+/g, '');
@@ -227,7 +226,7 @@ const Register: React.FC = () => {
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.response?.data || 'Registration failed. Try checking your credentials.');
     } finally {
       setLoading(false);
@@ -331,7 +330,6 @@ const Register: React.FC = () => {
                   )
                 }}
               />
-
 
               {role === 'POLICY_HOLDER' ? (
                 <>

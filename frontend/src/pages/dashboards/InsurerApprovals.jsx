@@ -5,8 +5,8 @@ import BlockIcon from '@mui/icons-material/Block';
 
 import api from '../../services/api';
 
-const InsurerApprovals: React.FC = () => {
-  const [insurers, setInsurers] = useState<any[]>([]);
+const InsurerApprovals = () => {
+  const [insurers, setInsurers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchPendingInsurers = async () => {
@@ -24,7 +24,7 @@ const InsurerApprovals: React.FC = () => {
     fetchPendingInsurers();
   }, []);
 
-  const handleApproveStatus = async (id: number, status: 'APPROVED' | 'REJECTED') => {
+  const handleApproveStatus = async (id, status) => {
     try {
       await api.put(`/api/admin/insurers/${id}/approve?status=${status}`);
       alert(`Insurer status successfully configured: ${status}`);

@@ -16,24 +16,8 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 
 import api from '../services/api';
 
-interface UpiQrPaymentModalProps {
-  open: boolean;
-  onClose: (failed?: boolean) => void;
-  amount: number;
-  payerUpiId: string;
-  receiverUpiId?: string;
-  receiverName?: string;
-  bankInfo?: string;
-  orderTitle?: string;
-  orderId?: string;
-  paymentType?: string;
-  referenceId?: number;
-  onPaymentSuccess?: () => void;
-  onPaymentSubmitted?: (utrNumber: string) => void;
-}
-
 // 100% Scannable Real QR Code Component
-const RealUpiQrCode: React.FC<{ upiString: string }> = ({ upiString }) => {
+const RealUpiQrCode = ({ upiString }) => {
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}&color=0f172a&margin=2`;
 
   return (
@@ -85,7 +69,7 @@ const RealUpiQrCode: React.FC<{ upiString: string }> = ({ upiString }) => {
   );
 };
 
-const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
+const UpiQrPaymentModal = ({
   open,
   onClose,
   amount,
@@ -133,7 +117,7 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
     return () => clearInterval(timer);
   }, [open]);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -161,7 +145,7 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
         paymentType,
         referenceId: referenceId || 0
       });
-    } catch (err: any) {
+    } catch (err) {
       console.warn('Backend UTR API sync notice (deployment in progress), proceeding with submission:', err);
     } finally {
       setSubmitting(false);
@@ -437,4 +421,3 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
 };
 
 export default UpiQrPaymentModal;
-

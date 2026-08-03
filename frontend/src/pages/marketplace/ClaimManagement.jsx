@@ -5,18 +5,18 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 
 import api from '../../services/api';
 
-const ClaimManagement: React.FC = () => {
-  const [activePurchases, setActivePurchases] = useState<any[]>([]);
-  const [claims, setClaims] = useState<any[]>([]);
+const ClaimManagement = () => {
+  const [activePurchases, setActivePurchases] = useState([]);
+  const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // New Claim Form State
-  const [selectedPurchase, setSelectedPurchase] = useState<string>('');
-  const [claimAmount, setClaimAmount] = useState<number>(15000);
+  const [selectedPurchase, setSelectedPurchase] = useState('');
+  const [claimAmount, setClaimAmount] = useState(15000);
   const [incidentDetails, setIncidentDetails] = useState('');
   const [documentUrls, setDocumentUrls] = useState('/uploads/bill_hospital.pdf, /uploads/discharge_summary.pdf');
   const [filingLoading, setFilingLoading] = useState(false);
-  const [aiReport, setAiReport] = useState<any>(null);
+  const [aiReport, setAiReport] = useState(null);
 
   const fetchClaimsAndPurchases = async () => {
     try {
@@ -37,7 +37,7 @@ const ClaimManagement: React.FC = () => {
     fetchClaimsAndPurchases();
   }, []);
 
-  const handleFileClaim = async (e: React.FormEvent) => {
+  const handleFileClaim = async (e) => {
     e.preventDefault();
     if (!selectedPurchase) {
       alert('Please select an active policy.');

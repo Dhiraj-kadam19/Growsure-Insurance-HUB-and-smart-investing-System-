@@ -4,10 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { RootState } from '../../store';
-
-const PolicyCompare: React.FC = () => {
-  const { compareA, compareB } = useSelector((state: RootState) => state.policy);
+const PolicyCompare = () => {
+  const { compareA, compareB } = useSelector((state) => state.policy);
   const navigate = useNavigate();
 
   if (!compareA || !compareB) {
@@ -24,7 +22,7 @@ const PolicyCompare: React.FC = () => {
   }
 
   // Helper to safely parse JSON strings for benefits/exclusions
-  const parseList = (jsonStr: string) => {
+  const parseList = (jsonStr) => {
     try {
       const parsed = JSON.parse(jsonStr);
       return Array.isArray(parsed) ? parsed : [jsonStr];

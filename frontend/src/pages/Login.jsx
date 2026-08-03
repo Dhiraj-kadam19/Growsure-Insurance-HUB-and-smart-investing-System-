@@ -26,7 +26,7 @@ import api from '../services/api';
 import { loginSuccess } from '../store';
 import Logo from '../components/Logo';
 
-const Login: React.FC = () => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,16 +34,16 @@ const Login: React.FC = () => {
 
   // Forgot / Reset Password state
   const [openForgotPassword, setOpenForgotPassword] = useState(false);
-  const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotOtp, setForgotOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotError, setForgotError] = useState<string | null>(null);
-  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
-  const [generatedOtpMsg, setGeneratedOtpMsg] = useState<string | null>(null);
+  const [forgotError, setForgotError] = useState(null);
+  const [forgotSuccess, setForgotSuccess] = useState(null);
+  const [generatedOtpMsg, setGeneratedOtpMsg] = useState(null);
 
   const handleOpenForgotPasswordModal = () => {
     setForgotStep(1);
@@ -58,7 +58,7 @@ const Login: React.FC = () => {
     setOpenForgotPassword(true);
   };
 
-  const handleSendForgotPasswordOtp = async (e: React.FormEvent) => {
+  const handleSendForgotPasswordOtp = async (e) => {
     e.preventDefault();
     if (!forgotEmail.trim()) {
       setForgotError('Please enter your registered email address.');
@@ -73,14 +73,14 @@ const Login: React.FC = () => {
       setGeneratedOtpMsg(response.data?.otp ? `Verification Code: ${response.data.otp}` : null);
       setForgotSuccess(response.data?.message || 'Verification code sent to your email.');
       setForgotStep(2);
-    } catch (err: any) {
+    } catch (err) {
       setForgotError(err.response?.data || 'Failed to send verification code.');
     } finally {
       setForgotLoading(false);
     }
   };
 
-  const handleVerifyOtpCode = async (e: React.FormEvent) => {
+  const handleVerifyOtpCode = async (e) => {
     e.preventDefault();
     if (!forgotOtp.trim()) {
       setForgotError('Please enter the 6-digit verification code.');
@@ -94,14 +94,14 @@ const Login: React.FC = () => {
       const response = await api.post('/api/auth/verify-otp', { email: forgotEmail, otp: forgotOtp });
       setForgotSuccess(response.data?.message || 'Email verified successfully! Enter your new password.');
       setForgotStep(3);
-    } catch (err: any) {
+    } catch (err) {
       setForgotError(err.response?.data || 'Invalid or expired verification code.');
     } finally {
       setForgotLoading(false);
     }
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+  const handleResetPasswordSubmit = async (e) => {
     e.preventDefault();
     if (!newPassword) {
       setForgotError('New password is required.');
@@ -128,16 +128,16 @@ const Login: React.FC = () => {
       alert(response.data?.message || 'Password reset successfully! Please sign in with your new password.');
       setOpenForgotPassword(false);
       setOpenLogin(true);
-    } catch (err: any) {
+    } catch (err) {
       setForgotError(err.response?.data || 'Failed to reset password. Please ensure email verification is complete.');
     } finally {
       setForgotLoading(false);
     }
   };
 
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openLogin, setOpenLogin] = useState(false);
   const [openAbout, setOpenAbout] = useState(false);
@@ -145,30 +145,30 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const validateEmail = (val: string): string | null => {
+  const validateEmail = (val) => {
     if (!val.trim()) return 'Email address is required.';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(val.trim())) return 'Please enter a valid email address (e.g. user@example.com).';
     return null;
   };
 
-  const validatePassword = (val: string): string | null => {
+  const validatePassword = (val) => {
     if (!val) return 'Password is required.';
     if (val.length < 6) return 'Password must be at least 6 characters long.';
     return null;
   };
 
-  const handleEmailChange = (val: string) => {
+  const handleEmailChange = (val) => {
     setEmail(val);
     if (emailError) setEmailError(validateEmail(val));
   };
 
-  const handlePasswordChange = (val: string) => {
+  const handlePasswordChange = (val) => {
     setPassword(val);
     if (passwordError) setPasswordError(validatePassword(val));
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const eErr = validateEmail(email);
     const pErr = validatePassword(password);
@@ -186,14 +186,14 @@ const Login: React.FC = () => {
       const response = await api.post('/api/auth/login', { email, password });
       dispatch(loginSuccess(response.data));
       navigate('/');
-    } catch (err: any) {
+    } catch (err) {
       setError(err.response?.data || 'Failed to authenticate. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuickLogin = (roleEmail: string) => {
+  const handleQuickLogin = (roleEmail) => {
     setEmail(roleEmail);
     setPassword('password123'); // seed password
     setEmailError(null);
@@ -890,7 +890,7 @@ const Login: React.FC = () => {
             </Typography>
             <Typography variant="body2" sx={{ color: '#cbd5e1', fontSize: '0.88rem', lineHeight: 1.7 }}>
               • <strong>Backend:</strong> High-performance RESTful APIs powered by <strong>.NET 8 Core</strong> and <strong>Spring Boot</strong>.<br />
-              • <strong>Frontend:</strong> React 18 with TypeScript, Redux Toolkit, and Material UI v5.<br />
+              • <strong>Frontend:</strong> React 18 with JavaScript, Redux Toolkit, and Material UI v5.<br />
               • <strong>Security:</strong> Enterprise JWT authentication, encrypted database storage, and secure NPCI UPI integration.
             </Typography>
           </Box>
@@ -1304,4 +1304,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

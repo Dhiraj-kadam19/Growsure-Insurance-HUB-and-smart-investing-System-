@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  const envUrl = import.meta.env?.VITE_API_URL;
   if (envUrl && envUrl.trim() !== '') {
     return envUrl;
   }

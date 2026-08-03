@@ -11,22 +11,22 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import SearchIcon from '@mui/icons-material/Search';
 
 import api from '../../services/api';
-import { setPolicies, setCompareA, setCompareB, RootState } from '../../store';
+import { setPolicies, setCompareA, setCompareB } from '../../store';
 import UpiQrPaymentModal from '../../components/UpiQrPaymentModal';
 
-const PolicyMarketplace: React.FC = () => {
+const PolicyMarketplace = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { policiesList, compareA, compareB } = useSelector((state: RootState) => state.policy);
+  const { policiesList, compareA, compareB } = useSelector((state) => state.policy);
   
   const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
-  const [maxPremium, setMaxPremium] = useState<number>(100000);
-  const [minCoverage, setMinCoverage] = useState<number>(100000);
+  const [maxPremium, setMaxPremium] = useState(100000);
+  const [minCoverage, setMinCoverage] = useState(100000);
   
   // Checkout Dialogs
   const [buyDialogOpen, setBuyDialogOpen] = useState(false);
-  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [nomineeName, setNomineeName] = useState('');
   const [nomineeRelationship, setNomineeRelationship] = useState('Spouse');
   const [nomineeContact, setNomineeContact] = useState('');
@@ -39,10 +39,10 @@ const PolicyMarketplace: React.FC = () => {
 
   // Payment simulated dialog
   const [paymentOverlayOpen, setPaymentOverlayOpen] = useState(false);
-  const [paymentData, setPaymentData] = useState<any>(null);
+  const [paymentData, setPaymentData] = useState(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [purchasedNumber, setPurchasedNumber] = useState('');
-  const [statusNotice, setStatusNotice] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [statusNotice, setStatusNotice] = useState(null);
 
   useEffect(() => {
     const fetchPolicies = async () => {
@@ -56,7 +56,7 @@ const PolicyMarketplace: React.FC = () => {
     fetchPolicies();
   }, [dispatch]);
 
-  const handleCompareSelect = (policy: any) => {
+  const handleCompareSelect = (policy) => {
     if (!compareA) {
       dispatch(setCompareA(policy));
     } else if (!compareB && compareA.id !== policy.id) {
@@ -68,7 +68,7 @@ const PolicyMarketplace: React.FC = () => {
     }
   };
 
-  const handleOpenBuy = (policy: any) => {
+  const handleOpenBuy = (policy) => {
     setSelectedPolicy(policy);
     setNomineeNameError('');
     setNomineeContactError('');
@@ -129,7 +129,7 @@ const PolicyMarketplace: React.FC = () => {
       setPaymentData(response.data);
       setBuyDialogOpen(false);
       setPaymentOverlayOpen(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       const msg = err?.response?.data || 'Failed to initialize payment gateway.';
       alert(typeof msg === 'string' ? msg : 'Failed to initialize payment gateway.');
@@ -146,13 +146,12 @@ const PolicyMarketplace: React.FC = () => {
       setPaymentOverlayOpen(false);
       setPurchasedNumber(response.data?.policyNumber || paymentData?.orderId || 'POL-' + Math.floor(Math.random() * 1000000));
       setSuccessDialogOpen(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       const msg = err?.response?.data || 'Payment validation failed.';
       alert(typeof msg === 'string' ? msg : 'Payment validation failed.');
     }
   };
-
 
   const filteredPolicies = policiesList.filter(policy => {
     const matchesCategory = category === '' || policy.category === category;
@@ -238,7 +237,7 @@ const PolicyMarketplace: React.FC = () => {
               min={1000} 
               max={100000} 
               step={1000} 
-              onChange={(_, val) => setMaxPremium(val as number)} 
+              onChange={(_, val) => setMaxPremium(val)} 
               color="primary"
             />
           </Grid>
@@ -250,7 +249,7 @@ const PolicyMarketplace: React.FC = () => {
               min={100000} 
               max={10000000} 
               step={500000} 
-              onChange={(_, val) => setMinCoverage(val as number)} 
+              onChange={(_, val) => setMinCoverage(val)} 
               color="primary"
             />
           </Grid>

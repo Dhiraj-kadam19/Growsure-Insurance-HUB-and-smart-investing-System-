@@ -6,10 +6,10 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import api from '../../services/api';
 
-const ClaimVerification: React.FC = () => {
-  const [claims, setClaims] = useState<any[]>([]);
+const ClaimVerification = () => {
+  const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [selectedClaim, setSelectedClaim] = useState(null);
 
   const fetchClaims = async () => {
     try {
@@ -26,7 +26,7 @@ const ClaimVerification: React.FC = () => {
     fetchClaims();
   }, []);
 
-  const handleUpdateStatus = async (id: number, status: 'APPROVED' | 'REJECTED') => {
+  const handleUpdateStatus = async (id, status) => {
     try {
       await api.put(`/api/claims/${id}/status?status=${status}`);
       alert(`Claim status updated to: ${status}`);

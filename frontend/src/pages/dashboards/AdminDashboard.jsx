@@ -20,14 +20,14 @@ import api from '../../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement, Filler);
 
-const AdminDashboard: React.FC = () => {
-  const [metrics, setMetrics] = useState<any>(null);
-  const [revenue, setRevenue] = useState<any>(null);
-  const [funds, setFunds] = useState<any>(null);
-  const [pendingUtrs, setPendingUtrs] = useState<any[]>([]);
+const AdminDashboard = () => {
+  const [metrics, setMetrics] = useState(null);
+  const [revenue, setRevenue] = useState(null);
+  const [funds, setFunds] = useState(null);
+  const [pendingUtrs, setPendingUtrs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [actionSuccess, setActionSuccess] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
   const fetchAdminStats = async () => {
     try {
@@ -52,26 +52,26 @@ const AdminDashboard: React.FC = () => {
     fetchAdminStats();
   }, []);
 
-  const handleApproveUtr = async (id: number) => {
+  const handleApproveUtr = async (id) => {
     setActionLoading(id);
     try {
       await api.put(`/api/admin/utr/${id}/approve`);
       setActionSuccess(`Payment UTR #${id} approved successfully! User policy/investment activated.`);
       fetchAdminStats();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error approving UTR', err);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleRejectUtr = async (id: number) => {
+  const handleRejectUtr = async (id) => {
     setActionLoading(id);
     try {
       await api.put(`/api/admin/utr/${id}/reject`);
       setActionSuccess(`Payment UTR #${id} rejected.`);
       fetchAdminStats();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error rejecting UTR', err);
     } finally {
       setActionLoading(null);
@@ -215,7 +215,7 @@ const AdminDashboard: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {pendingUtrs.map((u: any) => (
+                  {pendingUtrs.map((u) => (
                     <TableRow key={u.id} hover>
                       <TableCell>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{u.userName}</Typography>
@@ -340,7 +340,7 @@ const AdminDashboard: React.FC = () => {
         Best Performing Marketplace Funds (AUM & Returns)
       </Typography>
       <Grid container spacing={3}>
-        {funds?.bestPerformingFunds?.map((f: any) => (
+        {funds?.bestPerformingFunds?.map((f) => (
           <Grid item xs={12} md={4} key={f.id}>
             <Card className="glass-card" sx={{ p: 2 }}>
               <CardContent>

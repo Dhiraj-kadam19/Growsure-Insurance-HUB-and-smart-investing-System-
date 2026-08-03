@@ -27,40 +27,33 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import CloseIcon from '@mui/icons-material/Close';
 
 import api from '../../services/api';
-import { setFunds, RootState } from '../../store';
+import { setFunds } from '../../store';
 import UpiQrPaymentModal from '../../components/UpiQrPaymentModal';
 
-interface CartItem {
-  fund: any;
-  investmentType: 'SIP' | 'LUMPSUM';
-  amount: number;
-  sipDay: number;
-}
-
-const FundMarketplace: React.FC = () => {
+const FundMarketplace = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { fundsList } = useSelector((state: RootState) => state.fund);
+  const { fundsList } = useSelector((state) => state.fund);
   
-  const [category, setCategory] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedAmc, setSelectedAmc] = useState<string>('');
-  const [selectedSubCat, setSelectedSubCat] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('cagr');
-  const [page, setPage] = useState<number>(1);
+  const [category, setCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAmc, setSelectedAmc] = useState('');
+  const [selectedSubCat, setSelectedSubCat] = useState('');
+  const [sortBy, setSortBy] = useState('cagr');
+  const [page, setPage] = useState(1);
   const itemsPerPage = 12;
 
-  const [selectedFund, setSelectedFund] = useState<any>(null);
+  const [selectedFund, setSelectedFund] = useState(null);
   
   // Return Calculator State
   const [calcDialogOpen, setCalcDialogOpen] = useState(false);
-  const [calcAmount, setCalcAmount] = useState<number>(5000);
-  const [calcYears, setCalcYears] = useState<number>(3);
-  const [calcType, setCalcType] = useState<'SIP' | 'LUMPSUM'>('SIP');
-  const [calcResult, setCalcResult] = useState<number | null>(null);
+  const [calcAmount, setCalcAmount] = useState(5000);
+  const [calcYears, setCalcYears] = useState(3);
+  const [calcType, setCalcType] = useState('SIP');
+  const [calcResult, setCalcResult] = useState(null);
 
   // Investment Cart State
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+  const [cartItems, setCartItems] = useState(() => {
     try {
       const saved = localStorage.getItem('growsure_investment_cart');
       return saved ? JSON.parse(saved) : [];
@@ -69,25 +62,25 @@ const FundMarketplace: React.FC = () => {
     }
   });
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Payment Selection & Process Modal State
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<string>('UPI');
-  const [upiId, setUpiId] = useState<string>('sarveshkulkarni.2003@ybl');
-  const [cardNumber, setCardNumber] = useState<string>('4532 •••• •••• 8892');
-  const [cardExpiry, setCardExpiry] = useState<string>('08/28');
-  const [cardCvv, setCardCvv] = useState<string>('892');
-  const [selectedBank, setSelectedBank] = useState<string>('HDFC Bank');
+  const [paymentMethod, setPaymentMethod] = useState('UPI');
+  const [upiId, setUpiId] = useState('sarveshkulkarni.2003@ybl');
+  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8892');
+  const [cardExpiry, setCardExpiry] = useState('08/28');
+  const [cardCvv, setCardCvv] = useState('892');
+  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
   
   // Interactive Mobile UPI Collect Modal State
   const [upiCollectModalOpen, setUpiCollectModalOpen] = useState(false);
-  const [successReceipt, setSuccessReceipt] = useState<any>(null);
-  const [upiError, setUpiError] = useState<string>('');
+  const [successReceipt, setSuccessReceipt] = useState(null);
+  const [upiError, setUpiError] = useState('');
 
   // Fund Comparison State
-  const [compareFundA, setCompareFundA] = useState<any>(null);
-  const [compareFundB, setCompareFundB] = useState<any>(null);
+  const [compareFundA, setCompareFundA] = useState(null);
+  const [compareFundB, setCompareFundB] = useState(null);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
 
   const handleClearComparison = () => {
@@ -96,7 +89,7 @@ const FundMarketplace: React.FC = () => {
     setCompareModalOpen(false);
   };
 
-  const handleToggleCompare = (fund: any) => {
+  const handleToggleCompare = (fund) => {
     if (compareFundA?.id === fund.id) {
       setCompareFundA(null);
     } else if (compareFundB?.id === fund.id) {
@@ -140,9 +133,9 @@ const FundMarketplace: React.FC = () => {
 
   // Extract unique AMCs and SubCategories for Filter Dropdowns
   const { amcList, subCatList } = useMemo(() => {
-    const amcs = new Set<string>();
-    const subCats = new Set<string>();
-    fundsList.forEach((fund: any) => {
+    const amcs = new Set();
+    const subCats = new Set();
+    fundsList.forEach((fund) => {
       if (fund.amcName) amcs.add(fund.amcName);
       if (fund.subCategory) subCats.add(fund.subCategory);
     });
@@ -157,23 +150,23 @@ const FundMarketplace: React.FC = () => {
     let list = [...fundsList];
 
     if (category) {
-      list = list.filter((f: any) => 
+      list = list.filter((f) => 
         f.category?.toLowerCase() === category.toLowerCase() ||
         f.subCategory?.toLowerCase().includes(category.toLowerCase())
       );
     }
 
     if (selectedSubCat) {
-      list = list.filter((f: any) => f.subCategory === selectedSubCat);
+      list = list.filter((f) => f.subCategory === selectedSubCat);
     }
 
     if (selectedAmc) {
-      list = list.filter((f: any) => f.amcName === selectedAmc);
+      list = list.filter((f) => f.amcName === selectedAmc);
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      list = list.filter((f: any) => 
+      list = list.filter((f) => 
         f.fundName?.toLowerCase().includes(q) ||
         f.amcName?.toLowerCase().includes(q) ||
         f.subCategory?.toLowerCase().includes(q) ||
@@ -181,7 +174,7 @@ const FundMarketplace: React.FC = () => {
       );
     }
 
-    list.sort((a: any, b: any) => {
+    list.sort((a, b) => {
       if (sortBy === 'cagr') return (b.cagr || 0) - (a.cagr || 0);
       if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
       if (sortBy === 'aum') return (b.aumCrores || 0) - (a.aumCrores || 0);
@@ -209,7 +202,7 @@ const FundMarketplace: React.FC = () => {
     }
   }, [page, totalPages]);
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -222,7 +215,7 @@ const FundMarketplace: React.FC = () => {
   }, [filteredFunds, page]);
 
   // Cart Handlers
-  const handleAddToCart = (fund: any) => {
+  const handleAddToCart = (fund) => {
     const exists = cartItems.some(item => item.fund.id === fund.id);
     if (!exists) {
       const defaultAmount = fund.minSip || 1000;
@@ -238,11 +231,11 @@ const FundMarketplace: React.FC = () => {
     }
   };
 
-  const handleRemoveFromCart = (fundId: number) => {
+  const handleRemoveFromCart = (fundId) => {
     setCartItems(prev => prev.filter(item => item.fund.id !== fundId));
   };
 
-  const handleUpdateCartItem = (fundId: number, field: string, value: any) => {
+  const handleUpdateCartItem = (fundId, field, value) => {
     setCartItems(prev => prev.map(item => {
       if (item.fund.id === fundId) {
         return { ...item, [field]: value };
@@ -263,7 +256,7 @@ const FundMarketplace: React.FC = () => {
   };
 
   // Validate UPI ID format
-  const validateUpiId = (id: string) => /^[a-zA-Z0-9._-]+@[a-zA-Z]+$/.test(id.trim());
+  const validateUpiId = (id) => /^[a-zA-Z0-9._-]+@[a-zA-Z]+$/.test(id.trim());
 
   // Trigger UPI Collect Request Screen or Direct Payment
   const handleInitiatePayment = () => {
@@ -361,7 +354,7 @@ const FundMarketplace: React.FC = () => {
   };
 
   // Calculator Logic
-  const handleOpenCalculator = (fund: any) => {
+  const handleOpenCalculator = (fund) => {
     setSelectedFund(fund);
     setCalcAmount(fund.minSip || 5000);
     setCalcResult(null);
@@ -536,7 +529,7 @@ const FundMarketplace: React.FC = () => {
         </Card>
       ) : (
         <Grid container spacing={3}>
-          {currentFunds.map((fund: any) => {
+          {currentFunds.map((fund) => {
             const inCart = cartItems.some(item => item.fund.id === fund.id);
 
             return (
@@ -1122,7 +1115,7 @@ const FundMarketplace: React.FC = () => {
               labelId="calc-type-label"
               value={calcType}
               label="Investment Mode"
-              onChange={(e) => setCalcType(e.target.value as any)}
+              onChange={(e) => setCalcType(e.target.value)}
             >
               <MenuItem value="SIP">Monthly SIP</MenuItem>
               <MenuItem value="LUMPSUM">One-Time Lumpsum</MenuItem>
@@ -1233,7 +1226,7 @@ const FundMarketplace: React.FC = () => {
                   Purchased Mutual Fund Holdings ({successReceipt.count}):
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {successReceipt.items?.map((item: any, idx: number) => (
+                  {successReceipt.items?.map((item, idx) => (
                     <Box 
                       key={idx}
                       sx={{ 
@@ -1349,11 +1342,11 @@ const FundMarketplace: React.FC = () => {
                     value={compareFundA?.id || ''}
                     label="Select Fund 1"
                     onChange={(e) => {
-                      const fund = fundsList.find((f: any) => f.id === e.target.value);
+                      const fund = fundsList.find((f) => f.id === e.target.value);
                       setCompareFundA(fund);
                     }}
                   >
-                    {fundsList.map((f: any) => (
+                    {fundsList.map((f) => (
                       <MenuItem key={f.id} value={f.id}>{f.fundName} ({f.amcName})</MenuItem>
                     ))}
                   </Select>
@@ -1415,11 +1408,11 @@ const FundMarketplace: React.FC = () => {
                     value={compareFundB?.id || ''}
                     label="Select Fund 2"
                     onChange={(e) => {
-                      const fund = fundsList.find((f: any) => f.id === e.target.value);
+                      const fund = fundsList.find((f) => f.id === e.target.value);
                       setCompareFundB(fund);
                     }}
                   >
-                    {fundsList.map((f: any) => (
+                    {fundsList.map((f) => (
                       <MenuItem key={f.id} value={f.id}>{f.fundName} ({f.amcName})</MenuItem>
                     ))}
                   </Select>
