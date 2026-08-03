@@ -13,23 +13,33 @@ builder.Services.AddControllers();
 
 // Configure DB Context (MySQL / InMemory)
 var rawConn = builder.Configuration.GetConnectionString("DefaultConnection");
-bool isRender = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER"));
+bool isCloudEnv = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER")) ||
+                  !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("RENDER_SERVICE_ID")) ||
+                  !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"));
 
-if (isRender || string.IsNullOrWhiteSpace(rawConn) || rawConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) || rawConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+if (isCloudEnv || string.IsNullOrWhiteSpace(rawConn) || rawConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) || rawConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase))
 {
     builder.Services.AddDbContext<GrowsureContext>(options =>
         options.UseInMemoryDatabase("GrowsureDb"));
 }
 else
 {
-    builder.Services.AddDbContext<GrowsureContext>(options =>
-        options.UseMySql(rawConn, new MySqlServerVersion(new Version(8, 0, 31)), mysqlOptions =>
-        {
-            mysqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 3,
-                maxRetryDelay: TimeSpan.FromSeconds(5),
-                errorNumbersToAdd: null);
-        }));
+    try
+    {
+        builder.Services.AddDbContext<GrowsureContext>(options =>
+            options.UseMySql(rawConn, new MySqlServerVersion(new Version(8, 0, 31)), mysqlOptions =>
+            {
+                mysqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            }));
+    }
+    catch
+    {
+        builder.Services.AddDbContext<GrowsureContext>(options =>
+            options.UseInMemoryDatabase("GrowsureDb"));
+    }
 }
 
 

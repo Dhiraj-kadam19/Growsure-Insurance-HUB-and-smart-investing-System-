@@ -13,6 +13,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 EXPOSE 8081
 ENV ASPNETCORE_URLS=http://+:8081
+ENV DOTNET_SERVER_GARBAGE_COLLECTION=0
+ENV DOTNET_EnableDiagnostics=0
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Growsure.Api.dll"]
