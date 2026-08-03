@@ -21,8 +21,8 @@ const PolicyMarketplace = () => {
   
   const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
-  const [maxPremium, setMaxPremium] = useState(100000);
-  const [minCoverage, setMinCoverage] = useState(100000);
+  const [maxPremium, setMaxPremium] = useState(200000);
+  const [minCoverage, setMinCoverage] = useState(0);
   
   // Checkout Dialogs
   const [buyDialogOpen, setBuyDialogOpen] = useState(false);
@@ -154,7 +154,8 @@ const PolicyMarketplace = () => {
   };
 
   const filteredPolicies = policiesList.filter(policy => {
-    const matchesCategory = category === '' || policy.category === category;
+    const matchesCategory = category === '' || 
+      (policy.category && policy.category.toUpperCase() === category.toUpperCase());
     const matchesSearch = search === '' || 
       policy.policyName.toLowerCase().includes(search.toLowerCase()) ||
       (policy.insurer?.companyName && policy.insurer.companyName.toLowerCase().includes(search.toLowerCase()));
@@ -235,7 +236,7 @@ const PolicyMarketplace = () => {
             <Slider 
               value={maxPremium} 
               min={1000} 
-              max={100000} 
+              max={200000} 
               step={1000} 
               onChange={(_, val) => setMaxPremium(val)} 
               color="primary"
@@ -246,9 +247,9 @@ const PolicyMarketplace = () => {
             <Typography variant="caption" color="text.secondary">Min Sum Coverage: ₹{(minCoverage/100000).toFixed(1)}L</Typography>
             <Slider 
               value={minCoverage} 
-              min={100000} 
+              min={0} 
               max={10000000} 
-              step={500000} 
+              step={100000} 
               onChange={(_, val) => setMinCoverage(val)} 
               color="primary"
             />
