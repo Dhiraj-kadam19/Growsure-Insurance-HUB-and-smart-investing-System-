@@ -11,17 +11,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// Configure DB Context (MySQL / SQLite / SQL Server)
+// Configure DB Context (MySQL / InMemory / SQLite / SQL Server)
 var rawConn = builder.Configuration.GetConnectionString("DefaultConnection");
 
 bool isLocalhostOrMissing = string.IsNullOrWhiteSpace(rawConn) || 
                             rawConn.Contains("localhost", StringComparison.OrdinalIgnoreCase) || 
                             rawConn.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
 
-if (isLocalhostOrMissing || rawConn!.Contains("Data Source", StringComparison.OrdinalIgnoreCase) || rawConn.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+if (isLocalhostOrMissing)
 {
     builder.Services.AddDbContext<GrowsureContext>(options =>
-        options.UseSqlite("Data Source=growsure.db"));
+        options.UseInMemoryDatabase("GrowsureDb"));
+}
+else if (rawConn!.Contains("Data Source", StringComparison.OrdinalIgnoreCase) || rawConn.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddDbContext<GrowsureContext>(options =>
+        options.UseSqlite(rawConn));
 }
 else if (rawConn.Contains("Server=(localdb)", StringComparison.OrdinalIgnoreCase))
 {

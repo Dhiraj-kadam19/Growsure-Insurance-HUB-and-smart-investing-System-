@@ -60,13 +60,22 @@ const Register: React.FC = () => {
     return '';
   };
 
+  const formatAadhaar = (val: string): string => {
+    const digits = val.replace(/\D/g, '').slice(0, 12);
+    const parts = [];
+    for (let i = 0; i < digits.length; i += 4) {
+      parts.push(digits.slice(i, i + 4));
+    }
+    return parts.join(' ');
+  };
+
   const validateAadhaarValue = (val: string): string => {
-    const trimmed = val.trim();
-    if (!trimmed) return 'Aadhaar number is required.';
-    if (/[^\d]/.test(trimmed)) {
+    const digits = val.replace(/\s+/g, '').trim();
+    if (!digits) return 'Aadhaar number is required.';
+    if (/[^\d]/.test(digits)) {
       return 'Only numeric values are allowed.';
     }
-    if (trimmed.length !== 12) {
+    if (digits.length !== 12) {
       return 'Aadhaar number must contain exactly 12 digits.';
     }
     return '';
@@ -187,7 +196,7 @@ const Register: React.FC = () => {
     const payload: any = { name, email, password, role, address };
 
     if (role === 'POLICY_HOLDER') {
-      payload.aadhaar = aadhaar;
+      payload.aadhaar = aadhaar.replace(/\s+/g, '');
       payload.pan = pan;
       payload.dob = dob;
       payload.contact = contact;
@@ -318,21 +327,17 @@ const Register: React.FC = () => {
                         fullWidth 
                         required
                         value={aadhaar}
-                        inputProps={{ maxLength: 12 }}
+                        placeholder="1234 5678 9012"
+                        inputProps={{ maxLength: 14 }}
                         onChange={(e) => {
-                          const raw = e.target.value;
-                          const cleaned = raw.replace(/\D/g, '').slice(0, 12);
-                          setAadhaar(cleaned);
-                          let err = '';
-                          if (/[^\d]/.test(raw)) {
-                            err = 'Only numeric values are allowed.';
-                          } else {
-                            err = validateAadhaarValue(cleaned);
-                          }
+                          const formatted = formatAadhaar(e.target.value);
+                          setAadhaar(formatted);
+                          const digitsOnly = formatted.replace(/\s+/g, '');
+                          const err = validateAadhaarValue(digitsOnly);
                           setFieldErrors(prev => ({ ...prev, aadhaar: err }));
                         }}
                         error={Boolean(fieldErrors.aadhaar)}
-                        helperText={fieldErrors.aadhaar}
+                        helperText={fieldErrors.aadhaar || '4-digit blocks (e.g. 1234 5678 9012)'}
                       />
                     </Grid>
                     <Grid item xs={6}>

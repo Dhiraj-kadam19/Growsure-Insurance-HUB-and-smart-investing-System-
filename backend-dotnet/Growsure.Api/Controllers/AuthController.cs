@@ -106,9 +106,9 @@ namespace Growsure.Api.Controllers
 
             if (dto.Role.Equals("POLICY_HOLDER", StringComparison.OrdinalIgnoreCase))
             {
-                // Validate Aadhaar (exactly 12 numeric digits)
+                // Validate Aadhaar (exactly 12 numeric digits, spaces stripped)
                 var rawAadhaar = dto.Aadhaar ?? string.Empty;
-                var cleanAadhaar = rawAadhaar.Trim();
+                var cleanAadhaar = rawAadhaar.Replace(" ", "").Trim();
                 if (System.Text.RegularExpressions.Regex.IsMatch(cleanAadhaar, @"[^\d]"))
                 {
                     return BadRequest("Only numeric values are allowed.");
@@ -203,10 +203,10 @@ namespace Growsure.Api.Controllers
                 var holder = new PolicyHolder
                 {
                     UserId = user.Id,
-                    Aadhaar = dto.Aadhaar,
-                    Pan = dto.Pan?.ToUpper(),
+                    Aadhaar = (dto.Aadhaar ?? string.Empty).Replace(" ", "").Trim(),
+                    Pan = dto.Pan?.Trim().ToUpper(),
                     Dob = dto.Dob,
-                    Contact = dto.Contact,
+                    Contact = dto.Contact?.Trim(),
                     Address = dto.Address
                 };
                 _context.PolicyHolders.Add(holder);
