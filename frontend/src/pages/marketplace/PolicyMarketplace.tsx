@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { 
   Box, Grid, Card, CardContent, Typography, Button, TextField, 
   MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, 
-  DialogContent, DialogActions, Chip, Divider, Slider, InputAdornment
+  DialogContent, DialogActions, Chip, Divider, Slider, InputAdornment,
+  Snackbar, Alert
 } from '@mui/material';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import SearchIcon from '@mui/icons-material/Search';
@@ -36,6 +37,7 @@ const PolicyMarketplace: React.FC = () => {
   const [paymentData, setPaymentData] = useState<any>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [purchasedNumber, setPurchasedNumber] = useState('');
+  const [statusNotice, setStatusNotice] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const fetchPolicies = async () => {
@@ -342,7 +344,7 @@ const PolicyMarketplace: React.FC = () => {
         onClose={(failed) => {
           setPaymentOverlayOpen(false);
           if (failed) {
-            setError('Payment Failed: Session timed out (2 minute limit reached). Please try again.');
+            setStatusNotice({ message: '❌ Payment Failed: Session timed out (2 minute limit reached). Please try again.', type: 'error' });
           }
         }}
         amount={paymentData?.amount || selectedPolicy?.premiumAmount || 0}
@@ -356,8 +358,7 @@ const PolicyMarketplace: React.FC = () => {
         referenceId={selectedPolicy?.id}
         onPaymentSuccess={handleSimulatePaymentSuccess}
         onPaymentSubmitted={(utr) => {
-          setError(null);
-          setSuccessMessage(`UTR ${utr} submitted for Admin approval! Your policy will be activated once Admin accepts your payment.`);
+          setStatusNotice({ message: `⏳ UTR ${utr} submitted for Admin approval! Your policy will be activated once Admin accepts your payment.`, type: 'success' });
         }}
       />
 
@@ -380,6 +381,17 @@ const PolicyMarketplace: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={Boolean(statusNotice)}
+        autoHideDuration={4000}
+        onClose={() => setStatusNotice(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={statusNotice?.type || 'info'} variant="filled" sx={{ borderRadius: 3, fontWeight: 700 }}>
+          {statusNotice?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

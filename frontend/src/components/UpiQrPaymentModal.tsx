@@ -162,6 +162,9 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
         referenceId: referenceId || 0
       });
       setUtrSubmitted(true);
+      if (onPaymentSuccess) {
+        onPaymentSuccess();
+      }
       if (onPaymentSubmitted) {
         onPaymentSubmitted(cleanUtr);
       }
@@ -365,6 +368,12 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
                   <Typography variant="caption" color="text.secondary">Merchant Name:</Typography>
                   <Typography variant="caption" sx={{ fontWeight: 700 }}>{receiverName}</Typography>
                 </Box>
+                {payerUpiId && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', mt: 0.3 }}>
+                    <Typography variant="caption" color="text.secondary">Your UPI ID:</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>{payerUpiId}</Typography>
+                  </Box>
+                )}
               </Box>
 
               {/* UTR Number Verification Input Field */}
