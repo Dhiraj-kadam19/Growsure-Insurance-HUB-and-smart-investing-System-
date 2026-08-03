@@ -104,18 +104,41 @@ namespace Growsure.Api.Controllers
                 return BadRequest("Password must be at least 6 characters long.");
             }
 
+            // Validate Address (No @ or #, only alphabets, numbers, spaces, and basic punctuation)
+            var cleanAddress = dto.Address?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanAddress))
+            {
+                return BadRequest("Address details are required.");
+            }
+            if (cleanAddress.Contains("@") || cleanAddress.Contains("#"))
+            {
+                return BadRequest("Address cannot contain special characters like @ or #.");
+            }
+            if (!System.Text.RegularExpressions.Regex.IsMatch(cleanAddress, @"^[a-zA-Z0-9\s,.\/-]+$"))
+            {
+                return BadRequest("Address can only contain alphabets, numbers, spaces, and basic punctuation (, . - /).");
+            }
+
             if (dto.Role.Equals("POLICY_HOLDER", StringComparison.OrdinalIgnoreCase))
             {
-                // Validate Aadhaar (exactly 12 numeric digits, spaces stripped)
+                // Validate Aadhaar (exactly 12 numeric digits, spaces stripped, valid start digit, no repetitive digits)
                 var rawAadhaar = dto.Aadhaar ?? string.Empty;
                 var cleanAadhaar = rawAadhaar.Replace(" ", "").Trim();
                 if (System.Text.RegularExpressions.Regex.IsMatch(cleanAadhaar, @"[^\d]"))
                 {
-                    return BadRequest("Only numeric values are allowed.");
+                    return BadRequest("Only numeric values are allowed in Aadhaar number.");
                 }
                 if (cleanAadhaar.Length != 12)
                 {
                     return BadRequest("Aadhaar number must contain exactly 12 digits.");
+                }
+                if (cleanAadhaar.StartsWith("0") || cleanAadhaar.StartsWith("1"))
+                {
+                    return BadRequest("Aadhaar number cannot start with 0 or 1.");
+                }
+                if (System.Text.RegularExpressions.Regex.IsMatch(cleanAadhaar, @"^(\d)\1{11}$"))
+                {
+                    return BadRequest("Invalid Aadhaar number (cannot contain repetitive numbers like 000000000000).");
                 }
 
                 // Validate PAN (10 chars, format ABCDE1234F)

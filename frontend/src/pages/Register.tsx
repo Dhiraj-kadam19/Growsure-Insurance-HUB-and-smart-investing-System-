@@ -78,6 +78,30 @@ const Register: React.FC = () => {
     if (digits.length !== 12) {
       return 'Aadhaar number must contain exactly 12 digits.';
     }
+    if (digits.startsWith('0') || digits.startsWith('1')) {
+      return 'Aadhaar number cannot start with 0 or 1.';
+    }
+    if (/^(\d)\1{11}$/.test(digits)) {
+      return 'Invalid Aadhaar number (cannot contain repetitive numbers like 0000 0000 0000).';
+    }
+    return '';
+  };
+
+  const validateAddressValue = (val: string): string => {
+    const cleanAddr = val.trim();
+    if (!cleanAddr) return 'Address details are required.';
+    if (/[@#]/.test(val)) {
+      return 'Address cannot contain special characters like @ or #.';
+    }
+    if (!/^[a-zA-Z0-9\s,.\/-]+$/.test(cleanAddr)) {
+      return 'Address can only contain alphabets, numbers, spaces, and basic punctuation (, . - /).';
+    }
+    if (cleanAddr.length < 10) {
+      return 'Address must be at least 10 characters (include house number, street, city, pin code).';
+    }
+    if (!/[a-zA-Z]{3,}/.test(cleanAddr)) {
+      return 'Address must contain valid text for street/city.';
+    }
     return '';
   };
 
@@ -109,16 +133,8 @@ const Register: React.FC = () => {
     }
 
     // Address
-    const cleanAddr = address.trim();
-    if (!cleanAddr) {
-      errs.address = 'Address details are required.';
-    } else if (cleanAddr.length < 10) {
-      errs.address = 'Address must be at least 10 characters (include house number, street, city, pin code).';
-    } else if (!/[a-zA-Z]{3,}/.test(cleanAddr)) {
-      errs.address = 'Address must contain valid text for street/city (gibberish/symbols rejected).';
-    } else if (/^[^a-zA-Z0-9]+$/.test(cleanAddr)) {
-      errs.address = 'Address cannot contain only special characters.';
-    }
+    const addressErr = validateAddressValue(address);
+    if (addressErr) errs.address = addressErr;
 
     if (role === 'POLICY_HOLDER') {
       // Aadhaar Card
@@ -440,12 +456,15 @@ const Register: React.FC = () => {
                 fullWidth 
                 required
                 value={address}
+                placeholder="Door No, Street Name, Area, City, Pincode"
                 onChange={(e) => {
-                  setAddress(e.target.value);
-                  if (fieldErrors.address) setFieldErrors(prev => ({ ...prev, address: '' }));
+                  const raw = e.target.value;
+                  setAddress(raw);
+                  const err = validateAddressValue(raw);
+                  setFieldErrors(prev => ({ ...prev, address: err }));
                 }}
                 error={Boolean(fieldErrors.address)}
-                helperText={fieldErrors.address}
+                helperText={fieldErrors.address || 'Numbers, alphabets, spaces and basic punctuation only (no @ or #)'}
               />
 
               <Button 
