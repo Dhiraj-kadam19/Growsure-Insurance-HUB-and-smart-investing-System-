@@ -13,6 +13,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 
 import api from '../services/api';
 
@@ -166,9 +167,6 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
     } finally {
       setSubmitting(false);
       setUtrSubmitted(true);
-      if (onPaymentSuccess) {
-        onPaymentSuccess();
-      }
       if (onPaymentSubmitted) {
         onPaymentSubmitted(cleanUtr);
       }
@@ -235,26 +233,26 @@ const UpiQrPaymentModal: React.FC<UpiQrPaymentModalProps> = ({
               </Button>
             </Box>
           ) : utrSubmitted ? (
-            /* UTR Submitted State */
+            /* UTR Submitted State - Pending Admin Acceptance */
             <Box sx={{ py: 3, px: 1, textAlign: 'center' }}>
-              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 64, mb: 1.5 }} />
-              <Typography variant="h5" color="success.main" sx={{ fontWeight: 900, mb: 1 }}>
-                UTR Submitted to Admin!
+              <HourglassTopIcon color="warning" sx={{ fontSize: 64, mb: 1.5 }} />
+              <Typography variant="h5" color="warning.main" sx={{ fontWeight: 900, mb: 1 }}>
+                UTR Submitted - Pending Admin Approval
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Your 12-digit UTR Reference Code (<strong>{utrNumber}</strong>) has been sent to Admin for acceptance.
               </Typography>
-              <Alert severity="info" variant="outlined" sx={{ borderRadius: 3, fontWeight: 700, mb: 2, textAlign: 'left' }}>
-                Once approved by Admin, your payment will be completed and your policy/investment will be activated automatically.
+              <Alert severity="warning" variant="outlined" sx={{ borderRadius: 3, fontWeight: 700, mb: 2, textAlign: 'left' }}>
+                Your policy or mutual fund investment will <strong>NOT</strong> be activated in your portfolio until Admin approves your UTR code in the Admin Control Center.
               </Alert>
               <Button
                 variant="contained"
-                color="primary"
+                color="warning"
                 fullWidth
                 onClick={() => onClose(false)}
                 sx={{ py: 1.2, borderRadius: 2.5, fontWeight: 800 }}
               >
-                Got it / Done
+                Close & Await Admin Approval
               </Button>
             </Box>
           ) : (
